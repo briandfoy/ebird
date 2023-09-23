@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+use v5.38;
+
+use lib qw(lib);
+
+use eBird::CLI;
+
+our $VERSION = '0.010';
+
+my $cli = eBird::CLI->new(
+	version => eBird::CLI->VERSION,
+	( length $ENV{EBIRD_LOG_LEVEL} ? (log_level => $ENV{EBIRD_LOG_LEVEL}) : () ),
+	( length $ENV{EBIRD_API_KEY}   ? (api_key   => $ENV{EBIRD_API_KEY})   : () ),
+	);
+
+$cli->run( @ARGV );
+
+
+
+
+=head1 NAME
+
+ebird - command line interface to eBird
+
+=head1 SYNOPSIS
+
+	ebird login
+
+	ebird checklist list
+	ebird checklist list --mine
+
+	ebird checkist list --top100 [region]
+
+	ebird checklist fetch ABCDEDFG
+
+	ebird track ABCDEDFG
+
+	ebird region list
+	ebird region list REGION
+
+	ebird
+
+
+
+
+=head1 DESCRIPTION
+
+=cut
+
+
