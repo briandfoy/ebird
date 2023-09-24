@@ -5,7 +5,9 @@ package eBird::Command;
 
 use experimental qw(builtin);
 
-use builtin qw(weaken reftype);
+use builtin qw(weaken);
+use constant ACTION_FAILURE => 0;
+use constant ACTION_SUCCESS => 1;
 
 sub new ( $class, $cli ) {
 	weaken($cli);
@@ -27,25 +29,31 @@ sub api ($self) {
 	$self->{cli}{api};
 	}
 
-sub command_to_sub ( $self, $command ) {
-	"command_" . $command
+sub action_to_sub ( $self, $command ) {
+	"action_" . $command
 	}
 
-sub default_command { return }
+sub default_action { return }
 
 sub description ( $self ) { "No description available" }
 
+sub fallthrough_action { return }
+
 sub group ( $self ) {
-	reftype($self) =~ s/.*:://r;
+	ref($self) =~ s/.*:://r;
 	}
 
-sub has_command ($self, $command) {
-	my $command_sub = $self->command_to_sub( $command );
-	$self->can($command_sub);
+sub has_action ($self, $action) {
+	my $action_sub = $self->action_to_sub( $action );
+	$self->can($action_sub);
 	}
 
-sub has_default_command ($self) {
-	$self->can('default_command')
+sub has_default_action ($self) {
+	defined $self->default_action;
+	}
+
+sub has_fallthrough_action ($self) {
+	defined $self->fallthrough_action;
 	}
 
 sub name ($self) {
@@ -53,27 +61,30 @@ sub name ($self) {
 	}
 
 sub run ( $self, @args ) {
-	my $group = $self->group;
-	$self->cli->logger->trace("In run for $group with args with <@args>");
+	my $group = ref($self);
+	$self->cli->logger->debug("In run for $group with args with <@args>");
+	$self->cli->logger->debug("run: args are <@args>");
 
-	@args = $self->default_command if( @args == 0 and $self->has_default_command );
+	$self->cli->logger->debug("run: has fallthrough => " . $self->has_fallthrough_action);
 
-	unless( $self->has_command($args[0]) ) {
-		$self->cli->output( "$group does not have a command <$args[0]>" );
-		return;
+	if( @args == 0 and  $self->has_default_action ) {
+		unshift @args, $self->default_action
+		}
+	elsif( @args > 0 and $self->has_action($args[0]) ) { () }
+	elsif( $self->has_fallthrough_action ) {
+		$self->cli->logger->debug("run: Selecting fallthrough");
+		unshift @args, $self->fallthrough_action;
+		}
+	else {
+		$self->cli->logger->debug("run: did not find an action");
 		}
 
-	$self->run_command( @args );
+	$self->cli->logger->debug("run: args are <@args>");
+	my $action = $self->action_to_sub( shift @args );
+	$self->$action( @args );
+
+	return ACTION_SUCCESS;
 	}
 
-sub run_command ( $self, $command, @args ) {
-	my $sub = $self->has_command( $command );
-	unless( defined $sub ) {
-		$self->cli->error("No command subroutine for $command");
-		return;
-		}
-
-	$sub->( $self, @args );
-	}
 
 __PACKAGE__;

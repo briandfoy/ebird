@@ -12,9 +12,9 @@ sub description ( $self ) {
 	"Dealing with taxonomic families"
 	}
 
-sub default_command { 'list' }
+sub default_action { 'list' }
 
-sub command_list ( $self, @args ) {
+sub action_list ( $self, @args ) {
 	my $data = $self->api->taxonomy;
 
 	my %results;

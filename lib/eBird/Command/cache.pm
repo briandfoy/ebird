@@ -10,7 +10,9 @@ sub description ( $self ) {
 	"interact with the cache"
 	}
 
-sub command_list ( $self ) {
+sub default_action ( $self ) { 'list' }
+
+sub action_list ( $self ) {
 	state $format = "%s      %s\n";
 
 	$self->cli->output( <<~"HERE" );
@@ -28,7 +30,7 @@ sub command_list ( $self ) {
 		}
 	}
 
-sub command_clear ( $self ) {
+sub action_clear ( $self ) {
 	my $cache_list = $self->api->list_cache;
 
 	foreach my $item ( $cache_list->@* ) {
@@ -37,11 +39,11 @@ sub command_clear ( $self ) {
 		}
 	}
 
-sub command_remove ( $self, @args ) {
+sub action_remove ( $self, @args ) {
 	$self->api->remove_cache_items( @args );
 	}
 
-sub command_show ( $self, @args ) {
+sub action_show ( $self, @args ) {
 	$self->cli->output(
 		$self->api->load_from_cache( $args[0] )
 		);

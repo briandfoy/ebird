@@ -12,18 +12,7 @@ sub description ( $self ) {
 	"Dealing with eBird regions"
 	}
 
-sub run ( $self, @args ) {
-	$self->cli->logger->trace("In run for region with args with <@args>");
-
-	unless( $self->has_command($args[0]) ) {
-		$self->cli->output( "region does not have a command <$args[0]>" );
-		return;
-		}
-
-	$self->run_command( @args );
-	}
-
-sub command_adjacent ( $self, @args ) {
+sub action_adjacent ( $self, @args ) {
 	unless( looks_like_region($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a region" );
 		return;
@@ -34,7 +23,7 @@ sub command_adjacent ( $self, @args ) {
 	$self->cli->output( dumper($data) );
 	}
 
-sub command_info ( $self, @args ) {
+sub action_info ( $self, @args ) {
 	unless( looks_like_region($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a region" );
 		return;
@@ -45,7 +34,7 @@ sub command_info ( $self, @args ) {
 	$self->cli->output( dumper($data) );
 	}
 
-sub command_list ( $self, @args ) {
+sub action_list ( $self, @args ) {
 	if( @args and ! looks_like_region($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a region" );
 		return;

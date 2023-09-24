@@ -14,7 +14,7 @@ sub description ( $self ) {
 
 sub default_command { 'list' }
 
-sub command_list ( $self, @args ) {
+sub action_list ( $self, @args ) {
 	my $data = $self->api->taxonomy;
 
 	my %results;

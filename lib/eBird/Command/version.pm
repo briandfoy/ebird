@@ -4,7 +4,10 @@ no feature qw(module_true);
 package eBird::Command::version;
 use parent qw(eBird::Command);
 
-sub run ( $self ) {
+sub default_action { 'show' }
+sub fallthrough_action { 'show' }
+
+sub action_show ( $self ) {
 	$self->cli->logger->trace("In run for version");
 	$self->cli->output( "version " . $self->cli->version );
 	}

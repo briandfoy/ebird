@@ -8,19 +8,8 @@ use eBird::Util qw(:all);
 
 use Mojo::Util qw(dumper);
 
-sub run ( $self, @args ) {
-	$self->cli->logger->trace("In run for hotspot with args with <@args>");
-
-	unless( $self->has_command($args[0]) ) {
-		$self->cli->output( "region does not have a command <$args[0]>" );
-		return;
-		}
-
-	$self->run_command( @args );
-	}
-
 # hotspot info L299148
-sub command_info ( $self, @args ) {
+sub action_info ( $self, @args ) {
 	my $data = $self->cli->api->hotspot_info( $args[0] );
 	unless( keys $data->%* ) {
 		$self->cli->error( "There is no information for hotspot <$args[0]>" );
@@ -33,7 +22,7 @@ sub command_info ( $self, @args ) {
 # hotspot list US
 # hotspot list US-NY
 # hotspot list US-NY-001
-sub command_list ( $self, @args ) {
+sub action_list ( $self, @args ) {
 	my $data = $self->cli->api->hotspots_in_region( $args[0] );
 
 	my %hash = map { $_->id, $_->name } $data->@*;
@@ -46,7 +35,7 @@ sub command_list ( $self, @args ) {
 # hotspot near L299148 --distance 25
 # hotspot near --latitude ... --longitude ...
 # hotspot near --latitude ... --longitude ... --distance 5
-sub command_near ( $self, @args ) {
+sub action_near ( $self, @args ) {
 	my %args;
 	if( matches_hotspot_id($args[0]) ) {
 		my $id = shift @args;

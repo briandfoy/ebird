@@ -4,7 +4,10 @@ no feature qw(module_true);
 package eBird::Command::help;
 use parent qw(eBird::Command);
 
-sub run ( $self ) {
+sub default_action { 'show' }
+sub fallthrough_action { 'show' }
+
+sub action_show ( $self ) {
 	$self->cli->output( sprintf "%s %s\n\n", map {$self->cli->$_()} qw(name version) );
 
 	$self->cli->output( "Commands\n\n" );
@@ -12,13 +15,13 @@ sub run ( $self ) {
 	foreach my $handler ( sort { $a->name cmp $b->name } $self->cli->handlers ) {
 
 
-		my $string = join "\n",
+		my $string = join " - ",
 			$handler->name,
-			$handler->description, "\n";
+			$handler->description;
 
 		$string =~ s/^(?!\R)/\t/gm;
 
-		$self->cli->output( $string );
+		$self->cli->output( "$string\n" );
 		}
 	}
 

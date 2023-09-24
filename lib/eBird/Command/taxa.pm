@@ -12,30 +12,21 @@ sub description ( $self ) {
 	"Dealing with eBird regions"
 	}
 
-sub run ( $self, @args ) {
-	$self->cli->logger->trace("In run for region with args with <@args>");
+sub default_action { 'list' }
 
-	unless( $self->has_command($args[0]) ) {
-		$self->cli->output( "region does not have a command <$args[0]>" );
-		return;
-		}
-
-	$self->run_command( @args );
-	}
-
-sub command_list ( $self ) {
+sub action_list ( $self ) {
 	my $data = $self->cli->api->taxonomy;
 
 	$self->cli->output( dumper($data) );
 	}
 
-sub command_locales ( $self, @args ) {
+sub action_locales ( $self, @args ) {
 	my $data = $self->cli->api->taxa_locales;
 
 	$self->cli->output( dumper($data) );
 	}
 
-sub command_groups ( $self, %args ) {
+sub action_groups ( $self, %args ) {
 	$args{locale}   //= 'en';
 	$args{grouping} //= 'ebird';
 
@@ -44,7 +35,7 @@ sub command_groups ( $self, %args ) {
 	$self->cli->output( dumper($data) );
 	}
 
-sub command_versions ( $self, @args ) {
+sub action_versions ( $self, @args ) {
 	my $data = $self->cli->api->taxa_versions;
 
 	$self->cli->output( dumper($data) );

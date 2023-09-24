@@ -8,20 +8,10 @@ use eBird::Util qw(:all);
 
 use Mojo::Util qw(dumper);
 
-sub run ( $self, @args ) {
-	$self->cli->logger->trace("In run for region with args with <@args>");
-
-	unless( $self->has_command($args[0]) ) {
-		$self->cli->output( "region does not have a command <$args[0]>" );
-		return;
-		}
-
-	$self->run_command( @args );
-	}
-
+sub fallthrough_action { 'view' }
 
 # checklist recent
-sub command_recent ( $self, @args ) {
+sub action_recent ( $self, @args ) {
 	unless( looks_like_region($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a region" );
 		return;
@@ -38,7 +28,7 @@ sub command_recent ( $self, @args ) {
 # checklist top US-NY-001 20230823
 # checklist top US-NY-001 2023-08-23
 # checklist top US-NY-001 2023/08/23
-sub command_top100 ( $self, @args ) {
+sub action_top100 ( $self, @args ) {
 
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
@@ -51,7 +41,7 @@ sub command_top100 ( $self, @args ) {
 # checklist top US-NY-001 20230823
 # checklist top US-NY-001 2023-08-23
 # checklist top US-NY-001 2023/08/23
-sub command_top ( $self, @args ) {
+sub action_top ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
 	$self->cli->output( dumper($data) );
@@ -75,7 +65,7 @@ sub command_top ( $self, @args ) {
 
 =cut
 
-sub command_view ( $self, @args ) {
+sub action_view ( $self, @args ) {
 	unless( looks_like_checklist_id($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a checklist ID" );
 		return;

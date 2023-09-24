@@ -12,9 +12,15 @@ sub description ( $self ) {
 	"Dealing with taxonomic families"
 	}
 
-sub default_command { 'list' }
+sub default_action { 'list' }
 
-sub command_list ( $self, @args ) {
+sub fallthrough_action { 'fallthrough' }
+
+sub action_fallthrough ( $self, @args ) {
+	$self->action_list( @args );
+	}
+
+sub action_list ( $self, @args ) {
 	my $data = $self->api->taxonomy;
 
 	my %hash;
@@ -48,25 +54,3 @@ sub command_list ( $self, @args ) {
 	}
 
 __PACKAGE__;
-
-__END__
-
-    "banding_codes" => {},
-    "category" => "species",
-    "com_name_codes" => {
-      "CRSA" => 1
-    },
-    "common_name" => "Crowned Sandgrouse",
-    "extinct" => "",
-    "extinct_year" => "",
-    "family_com_name" => "Sandgrouse",
-    "family_sci_name" => "Pteroclidae",
-    "order" => "Pterocliformes",
-    "report_as" => "",
-    "sci_name_codes" => {
-      "PTCO" => 1
-    },
-    "scientific_name" => "Pterocles coronatus",
-    "species_code" => "crosan1",
-    "taxon_order" => "2858.0"
-  }, 'eBird::Taxonomy' ),
