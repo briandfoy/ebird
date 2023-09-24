@@ -31,11 +31,19 @@ sub new ($class, %arguments) {
 	$self->{options} = \%options;
 	$self->{name} = $options{name};
 	$self->{version} = $options{version};
-	$self->{api} = eBird->new( api_key => $options{api_key} );
+	$self->{api} = eBird->new(
+		api_key => $options{api_key},
+		logger  => $self->{logger},
+		);
+
 
 	$self->load_commands;
 
 	return $self;
+	}
+
+sub DESTROY ( $self ) {
+	delete $self->{api};
 	}
 
 sub api ( $self ) { $self->{api} }
@@ -43,7 +51,6 @@ sub api ( $self ) { $self->{api} }
 sub logger ( $self ) { $self->{logger} }
 
 sub name ($self ) { $self->{name} }
-
 
 sub load_commands ($self) {
 	state $base_namespace = 'eBird::Command';

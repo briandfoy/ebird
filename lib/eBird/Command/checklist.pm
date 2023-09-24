@@ -58,16 +58,42 @@ sub command_top ( $self, @args ) {
 	}
 
 # checklist view
+
+=pod
+
+  3 rocpig1
+  4 moudov
+  1 rthhum
+  1 doccor
+  1 reevir1
+  1 grycat
+  3 amerob
+ 25 houspa
+  1 whtspa
+  1 norpar
+  1 magwar
+
+=cut
+
 sub command_view ( $self, @args ) {
 	unless( looks_like_checklist_id($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a checklist ID" );
 		return;
 		}
 
-	my $data = $self->cli->api->view_checklist( $args[0] );
+	my $checklist = $self->cli->api->view_checklist( $args[0] );
 
-	$self->cli->output( dumper($data) );
+	my $s = <<~"HERE";
+	Birder:  @{[ $checklist->birder ]}
+	started: @{[ $checklist->time_started ]}
 
+	HERE
+
+	$s .= join "\n",
+		map { sprintf "%3d %s", $_->count, $self->api->species_code_to_common_name($_->species_code) }
+		$checklist->observations->@*;
+
+	$self->cli->output( $s );
 	}
 
 __PACKAGE__;

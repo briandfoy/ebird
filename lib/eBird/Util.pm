@@ -44,6 +44,8 @@ sub looks_like_checklist_id :Export ( $checklist ) {
 	}
 
 sub looks_like_region :Export ( $region ) {
+#	return 1 if $region eq 'world';
+
 	uc($region) =~ m/
 		\A
 		[A-Z]{2}

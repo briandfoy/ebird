@@ -24,10 +24,23 @@ sub run ( $self, @args ) {
 	}
 
 sub command_code ( $self, @args ) {
-	my $data = $self->cli->api->taxonomy_by_band( $args[0] );
+	my $data = $self->api->taxonomy_by_band( $args[0] );
 
 	$self->cli->output( dumper($data) );
 	}
 
+sub command_for ( $self, @args ) {
+	my $data = $self->api->taxonomy_by_band( $args[0] );
+
+	$self->cli->output( dumper($data) );
+	}
+
+sub command_list ( $self, @args ) {
+	my $hash = $self->api->taxonomy_all_bands;
+
+	foreach my $key ( sort keys $hash->%* ) {
+		$self->cli->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
+		}
+	}
 
 __PACKAGE__;

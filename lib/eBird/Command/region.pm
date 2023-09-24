@@ -46,12 +46,12 @@ sub command_info ( $self, @args ) {
 	}
 
 sub command_list ( $self, @args ) {
-	unless( looks_like_region($args[0]) ) {
+	if( @args and ! looks_like_region($args[0]) ) {
 		$self->cli->error( "$args[0] does not look like a region" );
 		return;
 		}
 
-	my $data = $self->cli->api->subregion_data( $args[0] );
+	my $data = $self->cli->api->subregion_data( @args );
 
 	$self->cli->output( dumper($data) );
 	}
