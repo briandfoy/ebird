@@ -70,7 +70,7 @@ sub new ( $class, %args ) {
 =over 4
 
 
-=back
+=item * api_base_url
 
 =cut
 
