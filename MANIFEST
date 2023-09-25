@@ -1,5 +1,4 @@
 Changes
-cooker_report.txt
 examples/countries.pl
 examples/placeholder.pl
 INSTALL.SKIP
@@ -7,6 +6,7 @@ lib/eBird.pm
 lib/eBird/Checklist.pm
 lib/eBird/CLI.pm
 lib/eBird/Command.pm
+lib/eBird/Command/band.pm
 lib/eBird/Command/banding.pm
 lib/eBird/Command/cache.pm
 lib/eBird/Command/checklist.pm
