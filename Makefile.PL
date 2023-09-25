@@ -65,7 +65,12 @@ my %WriteMakefile = (
 		},
 
 	'PREREQ_PM' => {
-		'Carp' => '0',
+		'Carp'           => '0',
+		'Hash::AsObject' => '0',
+		'Mojo::File'     => '0',
+		'Mojo::JSON'     => '0',
+		'Mojolicious'    => '9',
+		'parent'         => '0',
 		},
 
 	'META_MERGE' => {
