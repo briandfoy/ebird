@@ -47,11 +47,15 @@ jobs:
             - run: git config --global core.autocrlf false
             - uses: actions/checkout@v3
             - name: Set up Perl
+# https://github.com/actions/runner-images/issues/1704
               run: |
-                choco install strawberryperl
-                echo "C:\strawberry\c\bin"         | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                echo "C:\strawberry\perl\site\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                echo "C:\strawberry\perl\bin"      | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                Get-Location
+                curl.exe -O -L --silent https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/dev_5380_20230805/strawberry-perl-5.38.0.2-64bit-portable.zip
+                7z x strawberry-perl-5.38.0.2-64bit-portable.zip
+                ls
+                echo "D:\a\ebird\ebird\c\bin"         | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                echo "D:\a\ebird\ebird\perl\site\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                echo "D:\a\ebird\ebird\perl\bin"      | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
             - name: Perl version
               run: perl -V
 # Install the dependencies, again not testing them. This installs the
