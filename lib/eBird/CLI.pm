@@ -9,6 +9,31 @@ use Mojo::File;
 
 our $VERSION = '0.001_01';
 
+=encoding utf8
+
+=head1 NAME
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head2 Class Methods
+
+=over 4
+
+=item * new( KEY => VALUE [, KEY => VALUE ...] )
+
+Create the object that coordinates the command line interface.
+
+Keys
+
+	- api       - the object that handles the API bits (eBird::API)
+	- logger    - a Mojo::Log compatible logging object
+	- log_level -
+	- name      - the program name to declare
+	- version   - the version to declare
+
+=cut
 
 sub new ($class, %arguments) {
 	state %defaults = qw(
@@ -46,11 +71,43 @@ sub DESTROY ( $self ) {
 	delete $self->{api};
 	}
 
+=back
+
+=head2 Instance methods
+
+=over 4
+
+=item * api
+
+Returns the object that handles the API details
+
+=cut
+
 sub api ( $self ) { $self->{api} }
+
+=item * logger
+
+Returns the logger object, which should have the same interface as
+L<Mojo::Log>.
+
+=cut
 
 sub logger ( $self ) { $self->{logger} }
 
+=item * name
+
+Returns the name of the program, which is "ebird" by default.
+
+=cut
+
 sub name ($self ) { $self->{name} }
+
+=item * load_commands
+
+Find the modules that implement the commands and load them through
+C<load_file>.
+
+=cut
 
 sub load_commands ($self) {
 	state $base_namespace = 'eBird::Command';
@@ -75,6 +132,12 @@ sub load_commands ($self) {
 
 	}
 
+=item * load_file
+
+Load a module and register its commands.
+
+=cut
+
 sub load_file ($self, $file) {
 	$self->logger->trace( "Trying to load module <$file>" );
 	my $class;
@@ -89,22 +152,52 @@ sub load_file ($self, $file) {
 	return 1;
 	}
 
+=item * output
+
+Send output to the standard output filehandle.
+
+=cut
+
 sub output ( $self, @messages ) {
 	print STDOUT join "\n", @messages;
 	}
+
+=item * error
+
+Send output to the error filehandle.
+
+=cut
 
 sub error ( $self, @messages ) {
 	print STDERR join "\n", @messages;
 	}
 
-sub output_data ( $self, $data, @args ) {
+=item * output_data
 
+At the moment this does nothing. Maybe we'll remove it.
+
+=cut
+
+sub output_data ( $self, $data, @args ) {
+	return;
 	}
 
+
+=item * handlers
+
+Returns the names of all the handlers as a list.
+
+=cut
 
 sub handlers ( $self ) {
 	values $self->{commands}->%*;
 	}
+
+=item * register( CLASS )
+
+Register a class that contains commands.
+
+=cut
 
 sub register ( $self, $class ) {
 	unless( $class->can('register') ) {
@@ -123,10 +216,61 @@ sub register ( $self, $class ) {
 
 	}
 
-sub run ( $self, $name, @args ) {
-	$self->{commands}{lc $name}->run( @args );
+=item * run( COMMAND, @ARGS )
+
+The main entry point to the program. It runs the command named C<COMMAND>
+and passes the C<ARGS> array.
+
+=cut
+
+sub run ( $self, $command, @args ) {
+	$self->{commands}{lc $command}->run( @args );
 	}
+
+=item * version
+
+Returns the version of the command.
+
+=cut
 
 sub version ( $self ) {
 	$self->{version};
 	}
+
+=back
+
+=head1 TO DO
+
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * eBird terms of use - https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=item * eBird API - https://documenter.getpostman.com/view/664302/S1ENwy59
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This source is in Github:
+
+	http://github.com/briandfoy/ebird
+
+=head1 AUTHOR
+
+brian d foy, C<< <brian d foy> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2023, brian d foy, All Rights Reserved.
+
+You may use this code under the terms of the Artistic License 2.0.
+
+The eBird API and its data have their own terms of use:
+https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=cut
+
+__PACKAGE__;

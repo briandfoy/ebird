@@ -8,7 +8,55 @@ use eBird::Util qw(:all);
 
 use Mojo::Util qw(dumper);
 
+=encoding utf8
+
+=head1 NAME
+
+eBird::Command::checklist -  show eBird checklists
+
+=head1 SYNOPSIS
+
+	% ebird checklist
+
+=head1 DESCRIPTION
+
+=head2 Methods
+
+=over 4
+
+=item * default_action
+
+Returns C<list>.
+
+=cut
+
+sub default_action { 'list' }
+
+=item * description
+
+=cut
+
+sub description ( $self ) {
+	"Dealing with eBird checklists"
+	}
+
+=item * fallthrough_action
+
+Returns C<view>.
+
+=cut
+
 sub fallthrough_action { 'view' }
+
+=back
+
+=head2 Actions
+
+=over 4
+
+=item * action_recent
+
+=cut
 
 # checklist recent
 sub action_recent ( $self, @args ) {
@@ -21,6 +69,10 @@ sub action_recent ( $self, @args ) {
 	$self->cli->output( dumper($data) );
 	}
 
+=item * action_top100
+
+=cut
+
 # checklist top US-NY-001
 # checklist top US-NY-001 today
 # checklist top US-NY-001 yesterday
@@ -29,11 +81,14 @@ sub action_recent ( $self, @args ) {
 # checklist top US-NY-001 2023-08-23
 # checklist top US-NY-001 2023/08/23
 sub action_top100 ( $self, @args ) {
-
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
 	$self->cli->output( dumper($data) );
 	}
+
+=item * action_top
+
+=cut
 
 # checklist date today
 # checklist date yesterday
@@ -46,6 +101,10 @@ sub action_top ( $self, @args ) {
 
 	$self->cli->output( dumper($data) );
 	}
+
+=item * action_view
+
+=cut
 
 # checklist view
 
@@ -85,5 +144,41 @@ sub action_view ( $self, @args ) {
 
 	$self->cli->output( $s );
 	}
+
+=back
+
+=head1 TO DO
+
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * eBird terms of use - https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=item * eBird API - https://documenter.getpostman.com/view/664302/S1ENwy59
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This source is in Github:
+
+	http://github.com/briandfoy/ebird
+
+=head1 AUTHOR
+
+brian d foy, C<< <brian d foy> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2023, brian d foy, All Rights Reserved.
+
+You may use this code under the terms of the Artistic License 2.0.
+
+The eBird API and its data have their own terms of use:
+https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=cut
 
 __PACKAGE__;
