@@ -66,7 +66,7 @@ sub action_list ( $self, @args ) {
 		}
 
 	foreach my $key ( sort keys %results ) {
-		$self->cli->output( sprintf "%s\n", $key );
+		$self->cli->io->output( sprintf "%s\n", $key );
 		}
 	}
 

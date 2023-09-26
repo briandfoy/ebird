@@ -54,7 +54,7 @@ sub fallthrough_action { 'show' }
 
 sub action_show ( $self ) {
 	$self->cli->logger->trace("In run for version");
-	$self->cli->output( "version " . $self->cli->version );
+	$self->cli->io->output( "version " . $self->cli->version );
 	}
 
 =back

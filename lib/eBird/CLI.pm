@@ -36,16 +36,17 @@ Keys
 =cut
 
 sub new ($class, %arguments) {
-	state %defaults = qw(
-		log_level warn
-		name ebird
+	state %defaults = (
+		name => 'ebird',
 		);
 	state %required = map { $_, 1 } qw(api_key);
 
 	my %options = ( %defaults, %arguments );
 
 	my $self = bless {}, $class;
-	$self->{logger} = Mojo::Log->new( level => $options{log_level} );
+	$self->{logger} = $options{logger} // Mojo::Log->new( level => $options{log_level} );
+
+	$self->{io} = $options{io} // eBird::IO->new;
 
 	my @missing = grep { ! exists $options{$_} } keys %required;
 	if( @missing ) {
@@ -54,13 +55,14 @@ sub new ($class, %arguments) {
 		}
 
 	$self->{options} = \%options;
-	$self->{name} = $options{name};
-	$self->{version} = $options{version};
+	$self->{cache} = $options{cache};
 	$self->{api} = eBird->new(
 		api_key => $options{api_key},
-		logger  => $self->{logger},
+		cache   => $self->cache,
+		logger  => $self->logger,
 		);
-
+	$self->{name} = $options{name};
+	$self->{version} = $options{version} // $class->VERSION;
 
 	$self->load_commands;
 
@@ -84,6 +86,18 @@ Returns the object that handles the API details
 =cut
 
 sub api ( $self ) { $self->{api} }
+
+=item * cache
+
+=cut
+
+sub cache ( $self ) { $self->{cache} }
+
+=item * io
+
+=cut
+
+sub io ( $self ) { $self->{io} }
 
 =item * logger
 
@@ -151,37 +165,6 @@ sub load_file ($self, $file) {
 	my $rc = $self->register( $class );
 	return 1;
 	}
-
-=item * output
-
-Send output to the standard output filehandle.
-
-=cut
-
-sub output ( $self, @messages ) {
-	print STDOUT join "\n", @messages;
-	}
-
-=item * error
-
-Send output to the error filehandle.
-
-=cut
-
-sub error ( $self, @messages ) {
-	print STDERR join "\n", @messages;
-	}
-
-=item * output_data
-
-At the moment this does nothing. Maybe we'll remove it.
-
-=cut
-
-sub output_data ( $self, $data, @args ) {
-	return;
-	}
-
 
 =item * handlers
 

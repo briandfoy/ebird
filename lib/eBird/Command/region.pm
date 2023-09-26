@@ -40,6 +40,12 @@ sub description ( $self ) {
 	"Dealing with eBird regions"
 	}
 
+=item * fallthrough_action()
+
+=cut
+
+sub fallthrough_action ( $self ) { 'fallthrough' }
+
 =back
 
 =head2 Actions
@@ -59,6 +65,14 @@ sub action_adjacent ( $self, @args ) {
 	my $data = $self->cli->api->adjacent_regions( split /-/, $args[0] );
 
 	$self->cli->output( dumper($data) );
+	}
+
+=item * action_fallthrough( ARGS )
+
+=cut
+
+sub action_fallthrough ( $self, @args ) {
+	$self->action_list( @args );
 	}
 
 =item * action_info( REGION )
@@ -82,13 +96,13 @@ sub action_info ( $self, @args ) {
 
 sub action_list ( $self, @args ) {
 	if( @args and ! looks_like_region($args[0]) ) {
-		$self->cli->error( "$args[0] does not look like a region" );
+		$self->cli->io->error( "$args[0] does not look like a region" );
 		return;
 		}
 
 	my $data = $self->cli->api->subregion_data( @args );
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =back

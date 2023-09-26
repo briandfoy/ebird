@@ -42,6 +42,7 @@ sub new ( $class, %args ) {
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_key
+		cache
 		logger
 		);
 
@@ -52,6 +53,13 @@ sub new ( $class, %args ) {
 		}
 	else {
 		$args{logger} = Mojo::Log->new;
+		}
+
+	if( defined $args{cache} ) {
+		weaken($args{cache});
+		}
+	else {
+		$args{cache} = eBird::Cache->new;
 		}
 
 	my $self = bless {
@@ -112,10 +120,16 @@ sub get ( $self, %args ) {
 	$args{json} = true unless defined $args{json};
 
 	my $data;
+
+	$self->logger->debug( "get: cache key is $args{cache_key}" );
+	$self->logger->debug( "get: args => " . dumper(\%args) );
+
 	if( defined $args{cache_key} ) {
-		$data = $self->load_from_cache( $args{cache_key} );
+		$data = $self->cache->load( $args{cache_key} );
+
 		$data = decode_json($data) if( defined $data and $args{json} );
-		$self->remove_cache_items( $args{cache_key} ) unless defined $data;
+		# $self->logger->debug( "get: data is -----\n" . dumper($data) . "\n-------\n" );
+		$self->cache->remove( $args{cache_key} ) unless defined $data;
 		}
 
 	return $data if defined $data;
@@ -124,10 +138,9 @@ sub get ( $self, %args ) {
 	my $url = $base->clone->path($path_segment);
 	$url->query($args{query}) if defined $args{query};
 	my $tx = $self->ua->get( $url );
-#	say "----\n", $tx->res->to_string, "-----\n";
 	$data = $tx->res->body;
 
-	$self->save_to_cache( $args{cache_key}, $data ) if defined $args{cache_key};
+	$self->cache->save( $args{cache_key}, $data ) if defined $args{cache_key};
 
 	if( $tx->res->headers->content_type =~ /json/ ) {
 		$data = decode_json($data) if $args{json};
@@ -149,6 +162,18 @@ sub expand_path_template ( $self, $path_template, $args = {} ) {
 =cut
 
 sub logger ( $self ) { $self->{logger} }
+
+=item * output
+
+=cut
+
+sub output ( $self ) { $self->{output} }
+
+=item * cache
+
+=cut
+
+sub cache ( $self ) { $self->{cache} }
 
 =item * parse_csv
 
@@ -201,67 +226,6 @@ sub parse_taxonomy_csv ( $self, $csv_data ) {
 		];
 
 	$self->parse_csv( $csv_data, $headers, 'eBird::Taxonomy' );
-	}
-
-=item * cache_dir
-
-=cut
-
-sub cache_dir ( $self ) {
-	state $default = Mojo::File->new( $ENV{HOME} )->child('.ebird-perl' )->make_path;
-	state $cache_dir;
-	return $cache_dir if( defined $cache_dir && -d $cache_dir );
-
-	my $env_dir = $ENV{EBIRD_CACHE_DIR};
-	if( defined $env_dir and ! -d $env_dir ) {
-		$env_dir = Mojo::File->new($env_dir);
-		$env_dir->make_path;
-		}
-	$env_dir // $default
-	}
-
-=item * list_cache
-
-=cut
-
-sub list_cache ( $self ) {
-	$self->cache_dir->list
-		->map( sub { [ $_->basename, $_->stat->ctime ] } )
-		->to_array
-	}
-
-=item * load_from_cache
-
-=cut
-
-sub load_from_cache ( $self, $key ) {
-	$self->logger->debug( "Looking for $key in cache" );
-	my $file = $self->cache_dir->child($key);
-	return unless -e $file;
-
-	$self->logger->debug( "Found $key in cache" );
-
-	Mojo::File->new($file)->slurp;
-	}
-
-=item * remove_cache_items
-
-=cut
-
-sub remove_cache_items ( $self, @items ) {
-	foreach my $item ( @items ) {
-		Mojo::File->new( $self->cache_dir )->child( $item )->remove;
-		}
-	}
-
-=item * save_to_cache
-
-=cut
-
-sub save_to_cache ( $self, $key, $data ) {
-	$self->logger->debug( "Saving data to $key. Bytes " . length $data );
-	my $file = $self->cache_dir->child($key);
-	$file->spurt($data);
 	}
 
 =back
@@ -547,11 +511,12 @@ sub hotspot_info ( $self, $location_id ) {
 			},
 		);
 
+$self->logger->debug( dumper( $data ) );
 	unless( keys $data->%* ) {
 		$self->logger->warn( "There is no information for hotspot <$location_id>" );
 		}
 
-	$data
+	eBird::Hotspot->new($data)
 	}
 
 =item * nearby_hotspots( LATITUDE, LONGITUDE, DISTANCE )
@@ -568,7 +533,7 @@ sub nearby_hotspots ($self, $latitude, $longitude, $distance = 25) {
 	return $cache->{$latitude}{$longitude}{$distance}
 		if defined $cache->{$latitude}{$longitude}{$distance};
 
-	my $tx = $self->get(
+	my $data = $self->get(
 		path_template => $path_template,
 		cache_key => "nearby-$latitude^$longitude-$distance",
 		args => {},
@@ -577,9 +542,10 @@ sub nearby_hotspots ($self, $latitude, $longitude, $distance = 25) {
 			lng  => $longitude,
 			dist => $distance,
 			},
+		json => false,
 		);
 
-	$self->parse_location_csv( $tx->res->body );
+	$self->parse_location_csv( $data );
 	}
 
 =back
@@ -906,7 +872,7 @@ sub countries ( $self ) {
 		);
 
 	$data = {
-		map { ( $_->{code} => $_->{name} ) } decode_json($data)->@*
+		map { ( $_->{code} => $_->{name} ) } $data->@*
 		};
 
 	return $data
@@ -937,7 +903,6 @@ sub subregion_data ( $self, $region = undef ) {
 			\%hash;
 			}
 		};
-
 	}
 
 =back

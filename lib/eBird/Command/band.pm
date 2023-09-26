@@ -96,7 +96,7 @@ sub action_fallthrough ( $self, @args ) {
 		$self->action_pattern(@args);
 		}
 	else {
-		$self->cli->error( "Did not understand <@args>" );
+		$self->cli->io->error( "Did not understand <@args>" );
 		}
 }
 
@@ -110,7 +110,7 @@ sub action_pattern ( $self, @args ) {
 	foreach my $item ( $data->@* ) {
 		my @codes = sort grep { /$args[0]/i } keys $item->{banding_codes}->%*;
 		foreach my $code ( @codes ) {
-			$self->cli->output( sprintf "%4s %s (%s)\n",
+			$self->cli->io->output( sprintf "%4s %s (%s)\n",
 				$code,
 				map { $item->$_() } qw(common_name scientific_name)
 				);
@@ -126,7 +126,7 @@ sub action_list ( $self, @args ) {
 	my $hash = $self->api->taxonomy_all_bands;
 
 	foreach my $key ( sort keys $hash->%* ) {
-		$self->cli->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
+		$self->cli->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
 		}
 	}
 

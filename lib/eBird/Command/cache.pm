@@ -73,18 +73,15 @@ sub default_action ( $self ) { 'list' }
 sub action_list ( $self ) {
 	state $format = "%s      %s\n";
 
-	$self->cli->output( <<~"HERE" );
-		# Cache directory: @{[$self->api->cache_dir]}
+	$self->cli->io->output( <<~"HERE" );
+		# Cache directory: @{[$self->cli->cache->dir]}
 		# EBIRD_CACHE_DIR: @{[$ENV{EBIRD_CACHE_DIR} // '<not set>']}
 		# --------------------------------------------
 		HERE
 
-	my $cache_list = $self->api->list_cache;
-
-	foreach my $item ( $cache_list->@* ) {
-		my $basename = $item->[0];
+	foreach my $item ( $self->cli->cache->list->@* ) {
 		my $date = localtime( $item->[1] );
-		$self->cli->output( sprintf $format, $date, $basename );
+		$self->cli->io->output( sprintf $format, $date, $item->[0] );
 		}
 	}
 
@@ -96,8 +93,8 @@ sub action_clear ( $self ) {
 	my $cache_list = $self->api->list_cache;
 
 	foreach my $item ( $cache_list->@* ) {
-		$self->api->remove_cache_items( $item->[0] );
-		$self->cli->output( "Removed $item->[0]" );
+		$self->cli->cache->remove( $item->[0] );
+		$self->cli->io->output( "Removed $item->[0]" );
 		}
 	}
 
@@ -106,7 +103,7 @@ sub action_clear ( $self ) {
 =cut
 
 sub action_remove ( $self, @args ) {
-	$self->api->remove_cache_items( @args );
+	$self->cli->cache->remove( @args );
 	}
 
 =item * action_show
@@ -114,8 +111,8 @@ sub action_remove ( $self, @args ) {
 =cut
 
 sub action_show ( $self, @args ) {
-	$self->cli->output(
-		$self->api->load_from_cache( $args[0] )
+	$self->cli->io->output(
+		$self->cli->cache->load( $args[0] )
 		);
 	}
 

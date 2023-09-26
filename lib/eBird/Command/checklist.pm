@@ -66,7 +66,7 @@ sub action_recent ( $self, @args ) {
 		}
 	my $data = $self->cli->api->recent_checklists( split /-/, $args[0] );
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_top100
@@ -83,7 +83,7 @@ sub action_recent ( $self, @args ) {
 sub action_top100 ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_top
@@ -99,7 +99,7 @@ sub action_top100 ( $self, @args ) {
 sub action_top ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_view

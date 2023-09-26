@@ -57,7 +57,7 @@ sub description ( $self ) {
 sub action_list ( $self ) {
 	my $data = $self->cli->api->taxonomy;
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_locales
@@ -67,7 +67,7 @@ sub action_list ( $self ) {
 sub action_locales ( $self, @args ) {
 	my $data = $self->cli->api->taxa_locales;
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_groups
@@ -80,7 +80,7 @@ sub action_groups ( $self, %args ) {
 
 	my $data = $self->cli->api->taxa_groups(%args);
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_versions
@@ -90,7 +90,7 @@ sub action_groups ( $self, %args ) {
 sub action_versions ( $self, @args ) {
 	my $data = $self->cli->api->taxa_versions;
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =back

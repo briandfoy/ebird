@@ -55,20 +55,18 @@ sub fallthrough_action { 'show' }
 =cut
 
 sub action_show ( $self ) {
-	$self->cli->output( sprintf "%s %s\n\n", map {$self->cli->$_()} qw(name version) );
+	$self->cli->io->output( sprintf "%s %s\n\n", map {$self->cli->$_()} qw(name version) );
 
-	$self->cli->output( "Commands\n\n" );
+	$self->cli->io->output( "Commands\n\n" );
 
 	foreach my $handler ( sort { $a->name cmp $b->name } $self->cli->handlers ) {
-
-
 		my $string = join " - ",
 			$handler->name,
 			$handler->description;
 
 		$string =~ s/^(?!\R)/\t/gm;
 
-		$self->cli->output( "$string\n" );
+		$self->cli->io->output( "$string\n" );
 		}
 	}
 

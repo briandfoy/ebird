@@ -65,7 +65,7 @@ sub action_list ( $self, @args ) {
 		}
 
 	foreach my $key ( sort keys %results ) {
-		$self->cli->output( sprintf "%-*s  %s\n", $longest, $key, $results{$key} );
+		$self->cli->io->output( sprintf "%-*s  %s\n", $longest, $key, $results{$key} );
 		}
 	}
 

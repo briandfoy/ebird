@@ -3,13 +3,25 @@ use v5.38;
 
 use lib qw(lib);
 
-use eBird::CLI;
 
 our $VERSION = '0.010';
 
+my $logger = Mojo::Log->new;
+$logger->level( $ENV{EBIRD_LOG_LEVEL} // 'info' );
+
+use eBird::IO;
+my $io = eBird::IO->new;
+
+use eBird::Cache;
+my $cache = eBird::Cache->new(
+	logger => $logger,
+	);
+
+use eBird::CLI;
 my $cli = eBird::CLI->new(
-	version => eBird::CLI->VERSION,
-	( length $ENV{EBIRD_LOG_LEVEL} ? (log_level => $ENV{EBIRD_LOG_LEVEL}) : () ),
+	cache   => $cache,
+	logger  => $logger,
+	io      => $io,
 	( length $ENV{EBIRD_API_KEY}   ? (api_key   => $ENV{EBIRD_API_KEY})   : () ),
 	);
 
@@ -17,6 +29,18 @@ $cli->run( @ARGV );
 
 
 
+sub select_cache_dir {
+	state $default = Mojo::File->new( $ENV{HOME} )->child('.ebird-perl' )->make_path;
+	state $cache_dir;
+	return $cache_dir if( defined $cache_dir && -d $cache_dir );
+
+	my $env_dir = $ENV{EBIRD_CACHE_DIR};
+	if( defined $env_dir and ! -d $env_dir ) {
+		$env_dir = Mojo::File->new($env_dir);
+		$env_dir->make_path;
+		}
+	$env_dir // $default
+	}
 
 =head1 NAME
 

@@ -14,7 +14,7 @@ use Mojo::Util qw(dumper);
 
 =head1 SYNOPSIS
 
-=head1 DESCRIPTIONM
+=head1 DESCRIPTION
 
 =head2 Actions
 
@@ -28,11 +28,11 @@ use Mojo::Util qw(dumper);
 sub action_info ( $self, @args ) {
 	my $data = $self->cli->api->hotspot_info( $args[0] );
 	unless( keys $data->%* ) {
-		$self->cli->error( "There is no information for hotspot <$args[0]>" );
+		$self->cli->io->error( "There is no information for hotspot <$args[0]>" );
 		return;
 		}
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_list
@@ -47,7 +47,7 @@ sub action_list ( $self, @args ) {
 
 	my %hash = map { $_->id, $_->name } $data->@*;
 
-	$self->cli->output( dumper($data) );
+	$self->cli->io->output( dumper($data) );
 	}
 
 =item * action_near
@@ -64,9 +64,11 @@ sub action_near ( $self, @args ) {
 		my $id = shift @args;
 		my $data = $self->cli->api->hotspot_info( $id );
 		unless( keys $data->%* ) {
-			$self->cli->error( "There is no information for hotspot <$id>" );
+			$self->cli->io->error( "There is no information for hotspot <$id>" );
 			return;
 			}
+
+		say dumper($data);
 
 		$args{'--latitude'} = $data->latitude;
 		$args{'--longitude'} = $data->longitude;
@@ -80,7 +82,7 @@ sub action_near ( $self, @args ) {
 	push @errors, "--longitude is missing" unless exists $args{'--longitude'};
 
 	if( @errors ) {
-		$self->cli->error( join "\n", @errors );
+		$self->cli->io->error( join "\n", @errors );
 		return;
 		}
 
@@ -92,7 +94,7 @@ sub action_near ( $self, @args ) {
 		if( exists $args{'--distance'} and ! (0 <= $args{'--distance'} <= 500) );
 
 	if( @errors ) {
-		$self->cli->error( join "\n", @errors );
+		$self->cli->io->error( join "\n", @errors );
 		return;
 		}
 
@@ -106,7 +108,7 @@ sub action_near ( $self, @args ) {
 
 	my %hash = map { $_->id, $_->name } $data->@*;
 
-	$self->cli->output( dumper(\%hash) );
+	$self->cli->io->output( dumper(\%hash) );
 	}
 
 =back
