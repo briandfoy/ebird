@@ -126,7 +126,7 @@ sub action_top ( $self, @args ) {
 
 sub action_view ( $self, @args ) {
 	unless( looks_like_checklist_id($args[0]) ) {
-		$self->cli->error( "$args[0] does not look like a checklist ID" );
+		$self->cli->io->error( "$args[0] does not look like a checklist ID" );
 		return;
 		}
 
@@ -142,7 +142,7 @@ sub action_view ( $self, @args ) {
 		map { sprintf "%3d %s", $_->count, $self->api->species_code_to_common_name($_->species_code) }
 		$checklist->observations->@*;
 
-	$self->cli->output( $s );
+	$self->cli->io->output( $s );
 	}
 
 =back
