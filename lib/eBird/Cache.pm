@@ -4,6 +4,8 @@ use v5.38;
 use File::Spec::Functions qw(catfile);
 use Mojo::Util qw(decode encode);
 
+=encoding utf8
+
 =head1 NAME
 
 eBird::Cache - handle the cache

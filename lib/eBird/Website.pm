@@ -1,6 +1,8 @@
 package eBird::Website;
 use v5.38;
 
+=encoding utf8
+
 =head1 NAME
 
 =head1 SYNOPSIS
@@ -44,19 +46,159 @@ sub new ($class, %arguments) {
 
 =over 4
 
+=item *
+
+=cut
+
+sub create_gpx ($track_line, $start_time, $duration) {
+	state $rc = require Mojo::DOM;
+
+	my @points;
+	foreach my( $lon, $lat ) ( split /,/, $track_line ) {
+		push @points, {
+			latitude  => 0 + $lat,
+			longitude => 0 + $lon,
+			};
+		}
+	my $point_count = @points;
+
+
+	my $track_segment = Mojo::DOM->new_tag('trkseg');
+
+	foreach my $point ( @points ) {
+		my $track_point = Mojo::DOM->new_tag('trkpt');
+
+		$track_point->at('trkpt')
+			->attr( 'lat' => $point->{latitude} )
+			->attr( 'lon' => $point->{longitude} )
+			;
+
+		$track_segment->at('trkseg')->append_content( $track_point );
+		}
+
+	my $track = Mojo::DOM->new_tag('trk');
+	$track->at('trk')->append_content( Mojo::DOM->new_tag('name') );
+	$track->at('trk')->append_content( Mojo::DOM->new_tag('desc') );
+	$track->at('trk')->append_content( $track_segment );
+
+	my $gpx = Mojo::DOM->new_tag('gpx');
+	$gpx->at('gpx')
+		->attr( 'version' => '1.1' )
+		->attr( 'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance' )
+		->attr( 'xmlns' => 'http://www.topografix.com/GPX/1/1' )
+		->attr( 'xsi:schemaLocation' => 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd' )
+		->attr( 'creator' => 'foo' )
+		->append_content( $track );
+
+	return $gpx;
+	}
+
 =item * get_track
 
 =cut
 
 sub get_track ( $self, $checklist ) {
-	unless( $self->login_to_ebird() ) {
+	$self->logger->debug( "get_track: starting" );
+	my $html = $self->get_checklist_html( $checklist );
+	my $track = $self->extract_track( $html );
+	$self->logger->debug( "track: @$track" );
 
+
+	}
+
+sub get_checklist_html ( $self, $checklist ) {
+	unless( $self->login_to_ebird() ) {
+		$self->logger->debug( "get_checklist_html: could not log into eBird" );
+		return
 		}
 
 	my $checklist_url = sprintf 'https://ebird.org/checklist/%s', $checklist;
 	my $checklist_tx = $self->ua->get( $checklist_url );
-
 	$checklist_tx->res->body;
+	}
+
+sub extract_checklist {
+	state $rc = require Time::Moment;
+	state %months =
+		map { state $n = 1; $_, $n++ }
+		qw(January February March April May June July August September October November December);
+
+	my $li = $_;
+
+	my $sequence = $li->at( 'div.ResultsStats-index span' )->text =~ s/\D//gr;
+
+	my $checklist = $li->at( 'div.ResultsStats-title h3 a' )->attr( 'href' ) =~ s|.*/||r;
+	my $title = $li->at( 'div.ResultsStats-title h3 a' )->attr( 'title' );
+
+	my $hide = $li->at( 'div.ResultsStats-details div.u-hideForMedium div.GridFlex' );
+
+	my $location = $hide->at( 'div.ResultsStats-details-location' )->text;
+	my( $subnational2, $subnational1, $region ) = $hide->find( 'div.Breadcrumbs ul li' )
+		->map( sub { $_->text } )
+		->to_array
+		->@*
+		;
+
+	my $date = $title =~ m/
+		-
+		\s+
+		(?<day_name>\S+?)
+		, \s+
+		(?<month>\S+)
+		\s+
+		(?<date>\d+)
+		, \s+
+		(?<year>\d+)
+		(
+			\s+
+			(?<hour>\d+) : (?<minute>\d+)
+			\s+
+			(?<meridian>[AP]M)
+		)?
+		/ax;
+
+	my $hour  = $+{hour} + ($+{meridian} eq 'PM' ? 12 : 0);
+	my $month = $months{$+{month}};
+
+	my $time = do {
+		if( defined $+{hour} ) {
+			my $hour  = $+{hour} + (($+{meridian} eq 'PM' && $+{hour} != 12) ? 12 : 0);
+
+			{ hour => $hour, minute => $+{minute}, second => 0, offset => '-0400' }
+			}
+		else { {} }
+		};
+
+	my $tm = eval { Time::Moment->new(
+		year       => $+{year},
+		month      => $month,
+		day        => $+{date},
+		$time->%*
+		) };
+
+		{
+		location     => $location,
+		subnational2 => $subnational2,
+		subnational1 => $subnational1,
+		region       => $region,
+		sequence     => $sequence,
+		datetime     => $tm,
+		day          => $+{day_name},
+		year         => $+{year},
+		month        => $month,
+		date         => $+{date},
+		epoch        => $tm->epoch,
+		checklist    => $checklist,
+		title        => $title,
+		$time->%*,
+		}
+	}
+
+sub extract_track ( $self, $html ) {
+	$self->logger->debug( "extract_track: starting" );
+	Mojo::DOM->new($html)
+		->at( 'div#tracks-map-mini div div.Track' )
+		->attr( 'data-maptrack-data' );
 	}
 
 =item * login_to_ebird

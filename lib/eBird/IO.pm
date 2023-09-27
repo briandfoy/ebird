@@ -1,6 +1,8 @@
 package eBird::IO;
 use v5.38;
 
+=encoding utf8
+
 =head1 NAME
 
 eBird::IO - generalize the output
