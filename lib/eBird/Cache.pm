@@ -114,7 +114,6 @@ sub save ( $self, $key, $data ) {
 	$self->path($key)->spurt( $data );
 	}
 
-
 =back
 
 =head1 TO DO
@@ -150,3 +149,5 @@ The eBird API and its data have their own terms of use:
 https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 =cut
+
+__PACKAGE__;
