@@ -36,6 +36,8 @@ sub new ( $class, %args ) {
 	my $self = bless \%hash, $class;
 	}
 
+=back
+
 =head2 Instance methods
 
 =over 4
