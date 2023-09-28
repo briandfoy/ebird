@@ -2,7 +2,9 @@ package eBird::Website;
 use v5.38;
 no feature qw(module_true);
 
-use experimental qw(for_list);
+use experimental qw(builtin for_list);
+
+use builtin qw(ceil);
 
 use Mojo::DOM;
 use Mojo::Util qw(dumper);
@@ -66,10 +68,10 @@ sub io     ($self) { $self->{io} }
 
 =cut
 
-sub create_gpx ($self, $track_line, $start_time, $duration) {
+sub create_gpx ($self, $hash) {
 	$self->logger->debug( "create_gpx: starting" );
 	my @points;
-	foreach my( $lon, $lat ) ( split /,/, $track_line ) {
+	foreach my( $lon, $lat ) ( split /,/, $hash->{'track_string'} ) {
 		push @points, {
 			latitude  => 0 + $lat,
 			longitude => 0 + $lon,
@@ -120,9 +122,17 @@ sub get_track ( $self, $checklist ) {
 		return
 		}
 
-	my $track_string = $self->extract_track( $html );
-	$self->logger->debug( "track: " . substr( $track_string, 0, 50) . "..." );
-	my $gpx = $self->create_gpx($track_string, 0, 0);
+	my $hash = $self->extract_checklist_details( $html );
+	$self->logger->debug( "get_track: starting" . dumper($hash) );
+
+	$hash->{'track_string'} = $self->extract_track( $html );
+	$hash->{'points'} = ( $hash->{'track_string'} =~ tr/,/,/ + 1 ) / 2;
+	$hash->{'seconds_per_pair'} = $hash->{'seconds'} / $hash->{'points'};
+	$self->logger->debug( "get_track: seconds per pair: $hash->{'seconds_per_pair'}" );
+
+	$self->logger->debug( "track: " . substr( $hash->{'track_string'}, 0, 50) . "..." );
+	$self->logger->debug( "get_track: starting" . dumper($hash) );
+	my $gpx = $self->create_gpx($hash);
 
 	$gpx;
 	}
@@ -154,17 +164,48 @@ sub get_checklist_html ( $self, $checklist ) {
 	return $html;
 	}
 
-=item * extract_checklist
+=item * extract_checklist_details
 
 =cut
 
-sub extract_checklist {
+sub extract_checklist_details ( $self, $html ) {
+	my $dom = Mojo::DOM->new($html);
+
+	my %hash;
+
+	my $primary_details = $dom->at( 'h2#primary-details' );
+	$hash{'datetime'} = $primary_details->at( 'div time[datetime]' )->attr( 'datetime' );
+	$self->logger->debug( "datetime is $hash{datetime}" );
+
+	my $other_details = $dom->at( 'section[aria-labelledBy="other-details-effort"]' );
+	$hash{'protocol'} = $other_details->at( 'div[title^="Protocol:"] span.Heading-main' )->text;
+	$self->logger->debug( "protocol is $hash{protocol}" );
+
+	my @details = qw(observers duration distance);
+	foreach my $detail ( @details ) {
+		my $title = ucfirst( lc $detail );
+		$self->logger->debug( "detail is $detail, title is $title" );
+		$hash{$detail} = $other_details->at( qq(span[title^="$title:"] span:last-of-type) )->text;
+		$self->logger->debug( "$detail is $hash{$detail}" );
+		}
+
+	$self->logger->debug( "duration is $hash{duration}" );
+	if( $hash{'duration'} =~ m/
+		(?:(?<hours>\d+) \x20 hr,\x20)?
+		(?:(?<minutes>\d+) \x20 min)
+		/x ) {
+		@hash{qw(hours minutes)} = @+{qw(hours minutes)};
+		$hash{'seconds'} = ( $hash{'hours'}  // 0 ) * 60 * 60 + $hash{'minutes'} * 60;
+		};
+
+	\%hash;
+	}
+
+sub _extract_item_details ( $li ) { # This is not a methond
 	state $rc = require Time::Moment;
 	state %months =
 		map { state $n = 1; $_, $n++ }
 		qw(January February March April May June July August September October November December);
-
-	my $li = $_;
 
 	my $sequence = $li->at( 'div.ResultsStats-index span' )->text =~ s/\D//gr;
 
@@ -217,7 +258,7 @@ sub extract_checklist {
 		$time->%*
 		) };
 
-		{
+	my $hash = {
 		location     => $location,
 		subnational2 => $subnational2,
 		subnational1 => $subnational1,
@@ -244,6 +285,76 @@ sub extract_track ( $self, $html ) {
 	Mojo::DOM->new($html)
 		->at( 'div#tracks-map-mini div div.Track' )
 		->attr( 'data-maptrack-data' );
+	}
+
+=item * fetch_checklists_summary
+
+=cut
+
+sub fetch_checklists_summary ( $self ) {
+	unless( $self->login_to_ebird() ) {
+		$self->logger->debug( "fetch_checklists_summary: could not log into eBird" );
+		return
+		}
+
+	# https://ebird.org/mychecklists?currentRow=1&sortBy=date&o=desc
+	my $params = {
+		currentRow => 1,
+		sortBy     => 'date',
+		o          => 'desc',
+		};
+
+	my @checklists;
+	my $expected_pages = 1;
+	my $page = 0;
+	my $per_page = 100;
+
+	while( $page <= $expected_pages ) {
+		$page++;
+
+		$self->logger->debug( "Fetching page <$page> of <$expected_pages>" );
+
+		my $html = $self->fetch_list_page( $page, $per_page );
+
+		push @checklists, Mojo::DOM->new($html)->find( 'li[id^="checklist-"]' )
+			->map( \&_extract_item_details )
+			->to_array
+			->@*;
+
+		state $n = do {
+			$per_page = @checklists;
+			$self->logger->debug( "per page is <$per_page>" );
+			my $highest = $checklists[0]->{sequence};
+			$self->logger->debug( "Highest checklist is <$highest>" );
+			$expected_pages = ceil( $highest / $per_page );
+			$self->logger->debug( "Expected pages is <$expected_pages>" );
+			};
+		}
+
+	return \@checklists;
+	}
+
+=item * fetch_list_page
+
+=cut
+
+sub fetch_list_page ( $self, $page, $per_page = 100 ) {
+	my $params = {
+		currentRow => ($per_page * ($page-1)) + 1,
+		sortBy     => 'date',
+		o          => 'desc',
+		};
+
+	my $cache_key = "website-checklist-page-$page";
+	my $data = $self->cache->load( $cache_key );
+	return $data if defined $data;
+
+	my $checklists_tx = $self->ua->get( 'https://ebird.org/mychecklists' => form => $params );
+	my $html = $checklists_tx->res->body;
+
+	$self->cache->save( $cache_key, $html );
+
+	return $html;
 	}
 
 =item * login_to_ebird

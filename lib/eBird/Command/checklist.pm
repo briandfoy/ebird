@@ -54,6 +54,24 @@ sub fallthrough_action { 'view' }
 
 =over 4
 
+=item * action_list
+
+=cut
+
+sub action_list ( $self, @args ) {
+	my $data = $self->cli->website->fetch_checklists_summary;
+
+	foreach my $item ( $data->@* ) {
+		my $s = sprintf "% 4d %10s - %10s - %s\n",
+			$item->{sequence},
+			$item->{checklist},
+			$item->{datetime}->strftime('%Y-%m-%d'),
+			$item->{location};
+
+		$self->cli->io->output($s);
+		}
+	}
+
 =item * action_recent
 
 =cut
