@@ -69,6 +69,7 @@ my %WriteMakefile = (
 		'Hash::AsObject' => '0',
 		'Mojo::File'     => '0',
 		'Mojo::JSON'     => '0',
+		'Mojo::UserAgent::CookieJar::Role::Persistent' => '0',
 		'Mojolicious'    => '9',
 		'parent'         => '0',
 		},

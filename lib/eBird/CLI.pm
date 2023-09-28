@@ -28,6 +28,7 @@ Create the object that coordinates the command line interface.
 Keys
 
 	- api       - the object that handles the API bits (eBird::API)
+	- io
 	- logger    - a Mojo::Log compatible logging object
 	- log_level -
 	- name      - the program name to declare
@@ -218,6 +219,24 @@ Returns the version of the command.
 
 sub version ( $self ) {
 	$self->{version};
+	}
+
+=item * website
+
+This lazily initializes the parts to login to the website and fetch
+data.
+
+=cut
+
+sub website ( $self ) {
+	state $rc = require eBird::Website;
+	state $website = eBird::Website->new(
+		logger => $self->logger,
+		io     => $self->io,
+		cache  => $self->cache,
+		);
+
+	$website;
 	}
 
 =back

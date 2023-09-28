@@ -60,8 +60,8 @@ sub fallthrough_action { 'view' }
 
 # checklist recent
 sub action_recent ( $self, @args ) {
-	unless( looks_like_region($args[0]) ) {
-		$self->cli->error( "$args[0] does not look like a region" );
+	unless( looks_like_checklist($args[0]) ) {
+		$self->cli->error( "$args[0] does not look like a checklist ID" );
 		return;
 		}
 	my $data = $self->cli->api->recent_checklists( split /-/, $args[0] );
@@ -100,6 +100,21 @@ sub action_top ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
 	$self->cli->io->output( dumper($data) );
+	}
+
+=item * action_track
+
+=cut
+
+sub action_track ( $self, @args ) {
+	unless( looks_like_checklist_id($args[0]) ) {
+		$self->cli->error( "$args[0] does not look like a checklist ID" );
+		return;
+		}
+
+	my $data = $self->cli->website->get_track( $args[0] );
+
+	$self->cli->io->output( $data );
 	}
 
 =item * action_view
