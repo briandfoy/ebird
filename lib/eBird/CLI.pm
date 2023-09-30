@@ -128,7 +128,6 @@ sub load_commands ($self) {
 	state $base_namespace = 'eBird::Command';
 	state @namespace_dirs = split /::/, $base_namespace;
 
-
 	foreach my $dir ( @INC ) {
 		$self->logger->trace( "looking in dir <$dir> for command module" );
 		my $sub_dir = Mojo::File->new($dir)->child( @namespace_dirs );
