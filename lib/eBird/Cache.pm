@@ -93,7 +93,7 @@ Returns a L<Mojo::File> object for the file represented by KEY.
 =cut
 
 sub path ( $self, $key ) {
-	$self->dir->child($key)
+	$self->dir->child($key);
 	}
 
 =item * remove( KEY )
