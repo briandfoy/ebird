@@ -53,6 +53,83 @@ export tag.
 
 =over 4
 
+=item * day_in_range( YEAR, MONTH, DAY )
+
+Returns true if DAY is a valid date for MONTH in YEAR.
+
+=cut
+
+sub day_in_range :Export ($year, $month, $day) {
+	my $tm = Time::Moment->new(
+		year => $year,
+		month => $month,
+		day  => 1,
+		);
+
+	my $max = $tm->at_last_day_of_month->day_of_month;
+
+	1 <= $day <= $max and int($day) == $day;
+	}
+
+=item * geo_to_timezone( LATITUDE, LONGITUDE [, EPOCH_TIME] )
+
+=cut
+
+sub geo_to_timezone :Export ( $latitude, $longitude, $epoch = time() ) {
+	state $rc = require Mojo::UserAgent;
+	state $ua = Mojo::UserAgent->new;
+	state $url = Mojo::URL->new( 'http://api.timezonedb.com/v2.1/get-time-zone' );
+	state $api_key = get_timezonedb_api_key();
+
+	my $params = {
+		key    => $api_key,
+		format => 'json',
+		by     => 'position',
+		lat    => $latitude,
+		lng    => $longitude,
+		time   => $epoch,
+		};
+
+	my $tx = $ua->get( $url => form => $params );
+
+	my $hash = $tx->res->json;
+
+	$hash->{input}{latitude} = $latitude;
+	$hash->{input}{longitude} = $longitude;
+	$hash->{input}{epoch} = $epoch;
+
+	return $hash;
+	}
+
+=item * get_timezonedb_api_key()
+
+=cut
+
+sub get_timezonedb_api_key :Export () {
+	$ENV{TIMEZONEDB_API_KEY};
+	}
+
+=item * latitude_in_range( LATITUDE )
+
+Returns true if the value of LATITUDE is between -90. and 90 inclusively.
+
+=cut
+
+sub latitude_in_range :Export ($latitude) {
+	-90 <= $latitude <= 90
+	}
+
+=item * longitude_in_range( LONGITUDE )
+
+Returns true if the value of LONGITUDE is between -180. and 180 inclusively.
+
+=cut
+
+sub longitude_in_range :Export ($longitude) {
+	-180 <= $longitude <= 180
+
+	}
+
 =item * looks_like_checklist_id( STRING )
 
 Returns true if C<STRING> has the format of a checklist ID. These
@@ -113,27 +190,6 @@ sub matches_hotspot_id :Export ( $id ) {
 	$id =~ m/\AL\d+\z/a
 	}
 
-=item * latitude_in_range( LATITUDE )
-
-Returns true if the value of LATITUDE is between -90. and 90 inclusively.
-
-=cut
-
-sub latitude_in_range :Export ($latitude) {
-	-90 <= $latitude <= 90
-	}
-
-=item * longitude_in_range( LONGITUDE )
-
-Returns true if the value of LONGITUDE is between -180. and 180 inclusively.
-
-=cut
-
-sub longitude_in_range :Export ($longitude) {
-	-180 <= $longitude <= 180
-
-	}
-
 =item * month_in_range( MONTH_NUMBER )
 
 Returns true if the value of MONTH_NUMBER is a whole number and is
@@ -143,37 +199,6 @@ between 1 and 12 inclusively.
 
 sub month_in_range :Export ($month) {
 	1 <= $month <= 12 and int($month) == $month;
-	}
-
-=item * year_in_range( YEAR_NUMBER )
-
-Returns true if the year is a whole number and is between 1800 and the
-current year, inclusively. The year 1800 is the earliest available in
-the eBird API.
-
-=cut
-
-sub year_in_range :Export ($year) {
-	state $this_year = Time::Moment->new->year;
-	1800 <= $year <= $this_year and int($year) == $year;
-	}
-
-=item * day_in_range( YEAR, MONTH, DAY )
-
-Returns true if DAY is a valid date for MONTH in YEAR.
-
-=cut
-
-sub day_in_range :Export ($year, $month, $day) {
-	my $tm = Time::Moment->new(
-		year => $year,
-		month => $month,
-		day  => 1,
-		);
-
-	my $max = $tm->at_last_day_of_month->day_of_month;
-
-	1 <= $day <= $max and int($day) == $day;
 	}
 
 =item * normalize_date( DATE_STRING )
@@ -222,6 +247,19 @@ sub normalize_date :Export ($date) {
 		}
 
 	{ year => $year, month => $month, day => $day }
+	}
+
+=item * year_in_range( YEAR_NUMBER )
+
+Returns true if the year is a whole number and is between 1800 and the
+current year, inclusively. The year 1800 is the earliest available in
+the eBird API.
+
+=cut
+
+sub year_in_range :Export ($year) {
+	state $this_year = Time::Moment->new->year;
+	1800 <= $year <= $this_year and int($year) == $year;
 	}
 
 =back
