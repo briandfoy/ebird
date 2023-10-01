@@ -7,7 +7,11 @@ use experimental qw(builtin for_list);
 use builtin qw(ceil);
 
 use Mojo::DOM;
+use Mojo::JSON qw(decode_json encode_json);
 use Mojo::Util qw(dumper);
+use Time::Moment;
+
+use eBird::Util qw(:all);
 
 =encoding utf8
 
@@ -70,24 +74,32 @@ sub io     ($self) { $self->{io} }
 
 sub create_gpx ($self, $hash) {
 	$self->logger->debug( "create_gpx: starting" );
-	my @points;
-	foreach my( $lon, $lat ) ( split /,/, $hash->{'track_string'} ) {
-		push @points, {
-			latitude  => 0 + $lat,
-			longitude => 0 + $lon,
-			};
-		}
-	my $point_count = @points;
+	$self->logger->debug( "create_gpx: hash: " . dumper($hash) );
 
+	my $start_tm = Time::Moment->new(
+		$hash->%{qw(year month day hour minute)},
+		offset => $hash->{'timezonedb'}{'gmtOffset'} / 3600,
+		);
+
+	my $interval = $hash->{'seconds'} / $hash->{'track'}->@*;
+	my $offset = 0;
 
 	my $track_segment = Mojo::DOM->new_tag('trkseg');
 
-	foreach my $point ( @points ) {
+	foreach my $point ( $hash->{track}->@* ) {
+		my $this_tm = $start_tm->plus_seconds( $interval + $offset++ );
+
+		# 2023-08-05T09:43:29-04:00
+		my $time = Mojo::DOM->new_tag('time')->at('time')->content(
+			$start_tm->plus_seconds( $interval + $offset++ )->strftime( '%Y-%m-%dT%H:%M:%S%:z' )
+			);
+
 		my $track_point = Mojo::DOM->new_tag('trkpt');
 
 		$track_point->at('trkpt')
-			->attr( 'lat' => $point->{latitude} )
-			->attr( 'lon' => $point->{longitude} )
+			->attr( 'lat' => $point->[0] )
+			->attr( 'lon' => $point->[1] )
+			->content( $time );
 			;
 
 		$track_segment->at('trkseg')->append_content( $track_point );
@@ -104,10 +116,36 @@ sub create_gpx ($self, $hash) {
 		->attr( 'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance' )
 		->attr( 'xmlns' => 'http://www.topografix.com/GPX/1/1' )
 		->attr( 'xsi:schemaLocation' => 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd' )
-		->attr( 'creator' => 'foo' )
-		->append_content( $track );
+		->attr( 'creator' => 'ebird-perl' )
+		->append_content( $track )
+		->to_string;
+
+	$gpx =~ s/<(name|desc|trkseg)/\n  $&/gn;
+	$gpx =~ s/<trkpt/\n    $&/gn;
+	$gpx =~ s|</trkpt>|    $&|gn;
+	$gpx =~ s|<time>|\n      $&|gn;
+	$gpx =~ s|</time>|$&\n|gn;
 
 	return $gpx;
+	}
+
+=item * get_timezone_info
+
+=cut
+
+sub get_timezone_info ( $self, $latitude, $longitude, $epoch = time() ) {
+	$self->logger->debug( "get_timezone_info: starting" );
+
+	my $cache_key = sprintf 'timezone-^%.2f^%.2f-%d', $latitude, $longitude, $epoch;
+
+	my $data = $self->cache->load( $cache_key );
+	return decode_json($data) if $data;
+
+	$data = geo_to_timezone( $latitude, $longitude, $epoch );
+
+	$self->cache->save( $cache_key, encode_json($data) );
+
+	return $data;
 	}
 
 =item * get_track
@@ -123,15 +161,10 @@ sub get_track ( $self, $checklist ) {
 		}
 
 	my $hash = $self->extract_checklist_details( $html );
-	$self->logger->debug( "get_track: starting" . dumper($hash) );
-
-	$hash->{'track_string'} = $self->extract_track( $html );
-	$hash->{'points'} = ( $hash->{'track_string'} =~ tr/,/,/ + 1 ) / 2;
-	$hash->{'seconds_per_pair'} = $hash->{'seconds'} / $hash->{'points'};
-	$self->logger->debug( "get_track: seconds per pair: $hash->{'seconds_per_pair'}" );
+	# $self->logger->debug( "get_track: starting" . dumper($hash) );
 
 	$self->logger->debug( "track: " . substr( $hash->{'track_string'}, 0, 50) . "..." );
-	$self->logger->debug( "get_track: starting" . dumper($hash) );
+	# $self->logger->debug( "get_track: starting" . dumper($hash) );
 	my $gpx = $self->create_gpx($hash);
 
 	$gpx;
@@ -177,9 +210,16 @@ sub extract_checklist_details ( $self, $html ) {
 	$hash{'datetime'} = $primary_details->at( 'div time[datetime]' )->attr( 'datetime' );
 	$self->logger->debug( "datetime is $hash{datetime}" );
 
+	@hash{qw(year month day hour minute)} =
+		$hash{'datetime'} =~ /(\d\d\d\d)-(\d\d?)-(\d\d?)T(\d\d):(\d\d)/;
+
+	$hash{'epoch'} = Time::Moment->new( %hash{qw(year month day hour minute)} )->epoch;
+
 	my $other_details = $dom->at( 'section[aria-labelledBy="other-details-effort"]' );
 	$hash{'protocol'} = $other_details->at( 'div[title^="Protocol:"] span.Heading-main' )->text;
 	$self->logger->debug( "protocol is $hash{protocol}" );
+
+	$hash{'region'} = $dom->at( 'a[href^=/region/]' )->attr( 'href' );
 
 	my @details = qw(observers duration distance);
 	foreach my $detail ( @details ) {
@@ -197,6 +237,17 @@ sub extract_checklist_details ( $self, $html ) {
 		@hash{qw(hours minutes)} = @+{qw(hours minutes)};
 		$hash{'seconds'} = ( $hash{'hours'}  // 0 ) * 60 * 60 + $hash{'minutes'} * 60;
 		};
+
+	$hash{'track_string'} = eval {$dom->at( 'div#tracks-map-mini div div.Track' )
+		->attr( 'data-maptrack-data' ) };
+	# track is long,lat ... but most things want lat,long
+	if( length $hash{'track_string'} ) {
+		foreach my( $long, $lat ) ( split /\s*,\s*/, $hash{'track_string'} ) {
+			push $hash{'track'}->@*, [ $lat, $long ];
+			}
+		$hash{'timezonedb'} = $self->get_timezone_info( $hash{'track'}->[0]->@*, $hash{'epoch'} );
+		$self->logger->debug( 'extract_checklist_details: geo: ' . dumper($hash{'timezomedb'}) );
+		}
 
 	\%hash;
 	}
@@ -274,17 +325,6 @@ sub _extract_item_details ( $li ) { # This is not a methond
 		title        => $title,
 		$time->%*,
 		}
-	}
-
-=item * extract_track
-
-=cut
-
-sub extract_track ( $self, $html ) {
-	$self->logger->debug( "extract_track: starting" );
-	Mojo::DOM->new($html)
-		->at( 'div#tracks-map-mini div div.Track' )
-		->attr( 'data-maptrack-data' );
 	}
 
 =item * fetch_checklists_summary
