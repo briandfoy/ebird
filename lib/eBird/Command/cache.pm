@@ -66,6 +66,19 @@ Returns C<list>.
 
 sub default_action ( $self ) { 'list' }
 
+=item * action_clear
+
+=cut
+
+sub action_clear ( $self ) {
+	my $cache_list = $self->api->list_cache;
+
+	foreach my $item ( $cache_list->@* ) {
+		$self->cli->cache->remove( $item->[0] );
+		$self->cli->io->output( "Removed $item->[0]" );
+		}
+	}
+
 =item * action_list
 
 =cut
@@ -85,17 +98,44 @@ sub action_list ( $self ) {
 		}
 	}
 
-=item * action_clear
+=item * action_open
 
 =cut
 
-sub action_clear ( $self ) {
-	my $cache_list = $self->api->list_cache;
+sub action_open ( $self, @args ) {
+	my( $file ) = @args;
 
-	foreach my $item ( $cache_list->@* ) {
-		$self->cli->cache->remove( $item->[0] );
-		$self->cli->io->output( "Removed $item->[0]" );
+	my $path = $self->cli->cache->path( $file );
+	unless( -e $path ) {
+		$self->cli->logger->error( "There is no <$file> in the cache" );
+		return;
 		}
+
+	if( length $ENV{EDITOR} ) {
+		my $rc = system $ENV{EDITOR}, $path;
+		if( $rc == -1 ) {
+			$self->cli->logger->error( "Could not open file with <$ENV{EDITOR}>" );
+			return;
+			}
+		return $rc;
+		}
+	else {
+		my @command = do {
+			   if( length $ENV{EDITOR} ) { $ENV{EDITOR} }
+			elsif( $^O eq 'windows' ) { 'cmd.exe /c start ""' }
+			elsif( -x `which xdg-open` =~ s/\R+//r ) { 'xdg-open' }
+			elsif( -x `which open` =~ s/\R+//r ) { 'open' }
+			};
+		push @command, "$path";
+		my $rc = system { $command[0] } @command;
+		if( $rc == -1 ) {
+			$self->cli->logger->error( "Could not open <$path> with <$command[0]>" );
+			return;
+			}
+
+		return $rc
+		}
+
 	}
 
 =item * action_remove
