@@ -4,6 +4,8 @@ no feature qw(module_true);
 package eBird::Command::track;
 use parent qw(eBird::Command);
 
+use eBird::Util qw(:all);
+
 =encoding utf8
 
 =head1 NAME
@@ -56,7 +58,7 @@ sub action_fallthrough ( $self, @args ) {
 	$self->cli->logger->trace("In fallthough for track");
 	$self->cli->io->output( "track " . $self->cli->version );
 
-	unless( looks_like_checklist($args[0]) ) {
+	unless( looks_like_checklist_id($args[0]) ) {
 		$self->cli->io->error( "<$args[0]> does not look like a checklist" );
 		return;
 		}
