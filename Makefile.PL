@@ -67,10 +67,14 @@ my %WriteMakefile = (
 	'PREREQ_PM' => {
 		'Carp'           => '0',
 		'Hash::AsObject' => '0',
+		'Mojo::DOM'      => '0',
 		'Mojo::File'     => '0',
 		'Mojo::JSON'     => '0',
+		'Mojo::Log'      => '0',
 		'Mojo::UserAgent::CookieJar::Role::Persistent' => '0',
+		'Mojo::Util'     => '0',
 		'Mojolicious'    => '9',
+		'Time::Moment'   => '0',
 		'parent'         => '0',
 		},
 
