@@ -48,7 +48,7 @@ eBird::Util - basic utilities for getting stuff done
 
 =head2 Functions
 
-All of these funcitons are exportable on request, or with the C<:all>
+All of these functions are exportable on request, or with the C<:all>
 export tag.
 
 =over 4
