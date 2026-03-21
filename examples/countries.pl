@@ -5,13 +5,18 @@ use lib qw(/Users/brian/Dev/ebird/lib);
 use eBird;
 use Mojo::Util qw(dumper);
 
-my $ebird = eBird->new( api_key => 'orah02cb8ml5' );
+my $ebird = eBird->new( api_key => $ENV{'EBIRD_API_KEY'} );
 my $lat = '40.64';
 my $long = '-73.94';
 
-my @countries = $ebird->view_checklist( 'S147952661' );
+say $ebird->region->country_from_code($ARGV[0])->name;
 
-say dumper( \@countries );
+__END__
+foreach my $country ( $countries->@* ) {
+	printf "%2s  %s\n", map { $country->$_ } qw(short_code name);
+	}
+
+sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
 
 __END__
   blob:https://ebird.org/d89ee2e2-5a88-4acb-9277-926862f5be00
