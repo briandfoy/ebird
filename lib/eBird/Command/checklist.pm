@@ -12,7 +12,7 @@ use Mojo::Util qw(dumper);
 
 =head1 NAME
 
-eBird::Command::checklist -  show eBird checklists
+eBird::Command::checklist - show eBird checklists
 
 =head1 SYNOPSIS
 
