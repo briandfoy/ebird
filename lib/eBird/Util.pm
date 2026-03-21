@@ -15,10 +15,12 @@ sub MODIFY_CODE_ATTRIBUTES ( $package, $code_ref, @attributes ) {
 	foreach my $attribute ( @attributes ) {
 		my( $attribute_name ) = map { uc() } $attribute =~ m/\A(\w+)/;
 		no strict 'refs';
-		if( exists &{"ATTRIBUTE_$attribute_name"} ) {
+		if( ! defined &{"ATTRIBUTE_$attribute_name"} ) {
 			push @bad_attributes, $attribute if &{"ATTRIBUTE_$attribute_name"}( $package, $code_ref, $attribute )
 			}
-		else { push @bad_attributes, $attribute }
+		else {
+			&{"ATTRIBUTE_$attribute_name"}( $package, $code_ref, $attribute )
+			}
 		}
 
 	@bad_attributes;
