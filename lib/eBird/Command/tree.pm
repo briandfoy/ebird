@@ -12,11 +12,11 @@ use eBird::Util qw(:all);
 
 =head1 NAME
 
-eBird::Command::checklist -  show eBird checklists
+eBird::Command::tree -  show eBird checklists
 
 =head1 SYNOPSIS
 
-	% ebird checklist
+	% ebird tree
 
 =head1 DESCRIPTION
 
