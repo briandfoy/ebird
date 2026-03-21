@@ -1,6 +1,10 @@
 package eBird::Cache;
 use v5.38;
 
+use namespace::autoclean;
+
+use Carp qw(carp);
+use File::Path qw(make_path);
 use File::Spec::Functions qw(catfile);
 use Mojo::Util qw(decode encode);
 
@@ -49,7 +53,20 @@ C<~/.ebird-perl/cache>
 
 =cut
 
+sub _make_dir ( $self ) {
+	if( -e $self->dir and ! -d $self->dir ) {
+		carp "Cache dir <%s> exists but is not a directory";
+		return;
+		}
+	elsif( -e $self->dir ) {
+		return;
+		}
+	else {
+		make_path $self->dir;
+		}
+	}
 sub dir ( $self ) { $self->{cache_dir} }
+
 
 =item * list()
 
@@ -115,6 +132,7 @@ Save the UTF-8 octets of DATA to the the file represented by KEY.
 
 sub save ( $self, $key, $data ) {
 	$self->logger->debug( "save: Saving data to $key. Bytes " . length $data );
+	$self->_make_dir;
 	$self->path($key)->spurt( $data );
 	}
 
