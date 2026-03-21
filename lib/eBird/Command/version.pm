@@ -54,7 +54,12 @@ sub fallthrough_action { 'show' }
 
 sub action_show ( $self ) {
 	$self->cli->logger->trace("In run for version");
-	$self->cli->io->output( "version " . $self->cli->version );
+	$self->cli->io->output( join "\x{20}",
+		$self->cli->name,
+		"version",
+		$self->cli->version,
+		"(Perl $^V)"
+		);
 	}
 
 =back
