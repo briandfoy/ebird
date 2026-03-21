@@ -124,6 +124,9 @@ sub has_fallthrough_action ($self) {
 
 =item * name
 
+Returns the last portion of the namespace, which for commands show be the same
+as the command name.
+
 =cut
 
 sub name ($self) {
