@@ -84,6 +84,7 @@ my %WriteMakefile = (
 	'PREREQ_PM' => {
 		'Carp'           => '0',
 		'Hash::AsObject' => '0',
+		'namespace::autoclean' => '0',
 		'Mojo::DOM'      => '0',
 		'Mojo::File'     => '0',
 		'Mojo::JSON'     => '0',
@@ -91,6 +92,8 @@ my %WriteMakefile = (
 		'Mojo::UserAgent::CookieJar::Role::Persistent' => '0',
 		'Mojo::Util'     => '0',
 		'Mojolicious'    => '9',
+		'Ref::Util'      => '0',
+		'Scalar::Util'   => '0',
 		'Time::Moment'   => '0',
 		'parent'         => '0',
 		},
