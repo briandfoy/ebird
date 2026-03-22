@@ -1,3 +1,13 @@
 load.t
-pod.t
 pod_coverage.t
+pod.t
+expand_path_template.t
+util.t
+region_type.t
+endpoints/base.t
+endpoints/geo.t
+endpoints/hotspot.t
+endpoints/observation.t
+endpoints/product.t
+endpoints/region.t
+endpoints/taxonomy.t

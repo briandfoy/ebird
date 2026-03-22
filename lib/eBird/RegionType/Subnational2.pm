@@ -1,5 +1,6 @@
-use v5.36;
+use v5.38;
 use utf8;
+no feature qw(module_true);
 
 package eBird::RegionType::Subnational2;
 use parent qw(eBird::RegionType);
@@ -24,7 +25,7 @@ To test a region type:
 
 =head1 DESCRIPTION
 
-This region type represents the division after L<L<eBird::RegionType::Subnational1>,
+This region type represents the division after L<eBird::RegionType::Subnational1>,
 which might be a city. Not all countries support this division, but the type
 does not know about particular countries.
 

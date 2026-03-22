@@ -1,9 +1,11 @@
 use v5.38;
+use utf8;
 no feature qw(module_true);
 
 package eBird::Util;
 use B;
 use Exporter qw(import);
+use Ref::Util qw(:all);
 
 our @EXPORT_OK;
 our %EXPORT_TAGS;
@@ -130,6 +132,24 @@ Returns true if the value of LONGITUDE is between -180. and 180 inclusively.
 sub longitude_in_range :Export ($longitude) {
 	-180 <= $longitude <= 180
 
+	}
+
+=item * last_namespace_portion( NAMESPACE )
+
+Returns the last portion of the namespace, lowercased. This is used in various
+places where the namespace directly represents a string that is defined by the
+eBird API.
+
+=cut
+
+sub last_namespace_portion :Export ($namespace) {
+	my $n = do {
+		   if( is_blessed_ref $namespace ) { blessed($namespace) }
+		elsif( is_ref $namespace         ) { ref($namespace)     }
+        else                               { $namespace          }
+		};
+
+	lc( $n =~ s/.*:://r );
 	}
 
 =item * looks_like_checklist_id( STRING )

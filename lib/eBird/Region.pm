@@ -1,4 +1,7 @@
-use v5.36;
+use v5.38;
+use utf8;
+no feature qw(module_true);
+
 package eBird::Region;
 use Exporter qw(import);
 
@@ -37,6 +40,8 @@ sub ATTRIBUTE_EXPORT ( $package, $code_ref, $attribute ) {
 	return;
 	}
 
+=encoding utf8
+
 =head1 NAME
 
 eBird::Region -
@@ -48,8 +53,18 @@ eBird::Region -
 
 =head1 DESCRITION
 
-
 =over 4
+
+=item * adjacent_regions(REGION)
+
+Returns an array ref of L<eBird::Region> objects for the regions that touch
+C<REGION>.
+
+=cut
+
+sub adjacent_regions :Export ($ebird, $region) {
+	$ebird->geo->adjacent_regions( $region );
+	}
 
 =item * country_from_code( CODE )
 
@@ -58,11 +73,11 @@ there is no country for C<CODE>. This is case insensitive.
 
 =cut
 
-sub country_from_code :Export ( $self, $code ) {
+sub country_from_code :Export ( $ebird, $code ) {
 	my $country =
 		List::Util::first
 		{ lc $_->code eq lc $code }
-		$self->region->countries->@*;
+		$ebird->region->countries->@*;
 
 	defined $country ? $country : ();
 	}
@@ -74,11 +89,11 @@ there is no country for C<NAME>. This is case insensitive.
 
 =cut
 
-sub country_from_name :Export ( $self, $name ) {
+sub country_from_name :Export ( $ebird, $name ) {
 	my $country =
 		List::Util::first
 		{ lc $_->name eq lc $name }
-		$self->region->countries->@*;
+		$ebird->region->countries->@*;
 
 	defined $country ? $country : ();
 	}
@@ -112,6 +127,24 @@ Returns true if C<TYPE> is a known parent region type. See C<parent_region_types
 sub is_valid_parent_region_type :Export ( $self, $type ) {
 	state %valids = map { $_, 1 } $self->parent_region_types->@*;
 	exists $valids{$type};
+	}
+
+=item * is_valid_region(REGION)
+
+Returns true if C<REGION> looks like it could be a region code. This does not
+mean that the string is an actual region.
+
+=cut
+
+sub is_valid_region ( $self, $region ) {
+	$region =~ m/\A
+		[A-Z]+
+		(
+			(- [A-Z]+)
+			(- \d+ )?
+		)?
+		\z
+		/xa;
 	}
 
 =item * is_valid_region_type(TYPE)
@@ -180,17 +213,6 @@ sub sub_region_list_for :Export ( $self, $region_type, $parent_region ) {
 	$self->region->foo;
 	}
 
-
-sub is_valid_region ( $self, $region ) {
-
-	}
-
-sub subregion_type_for ( $self, $region ) {
-
-
-	}
-
-
 =item * subnationals2_for_country_subnational
 
 =cut
@@ -233,5 +255,28 @@ sub subnationals_for_country :Export ( $self, $country ) {
 		map { ( $_->{code} => $_->{name} ) } $data->@*
 		}
 	}
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This source is in Github:
+
+	http://github.com/briandfoy/ebird
+
+=head1 AUTHOR
+
+brian d foy, C<< <brian d foy> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2023-2026, brian d foy, All Rights Reserved.
+
+You may use this code under the terms of the Artistic License 2.0.
+
+The eBird API and its data have their own terms of use:
+https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=cut
 
 __PACKAGE__;

@@ -2,39 +2,19 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::Data::Country;
-use parent qw(Hash::AsObject);
-
 =encoding utf8
 
 =head1 NAME
 
-eBird::Data::Country - the representation of country information
-
 =head1 SYNOPSIS
-
-	my $countries = $eBird->region->countries;
-	foreach my $c ( $countries->@* ) {
-		printf "%2s  -->  %s\n", $c->short_code, $c->name;
-		}
 
 =head1 DESCRIPTION
 
-These objects represent the countries that eBird understands.
-
 =over 4
 
-=item * name
-
-Returns the full name of the country.
-
-=item * short_code
-
-An alias for C<code>.
+=item *
 
 =cut
-
-sub short_code ($self) { $self->code }
 
 =back
 
@@ -60,3 +40,5 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 =cut
 
 __PACKAGE__;
+
+

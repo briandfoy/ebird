@@ -8,4 +8,10 @@ my $ebird = eBird->new( api_key => $ENV{'EBIRD_API_KEY'} );
 
 say dumper( $ebird->region->region_info_for($ARGV[0]) );
 
+# say dumper( $ebird->region->subregion_list_for( 'subnational1', 'US' ) );
+
+say dumper( $ebird->geo->adjacent_regions( 'US' ) );
+
+
+
 sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }

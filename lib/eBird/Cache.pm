@@ -1,8 +1,9 @@
-package eBird::Cache;
 use v5.38;
+use utf8;
+
+package eBird::Cache;
 
 use namespace::autoclean;
-
 use Carp qw(carp);
 use File::Path qw(make_path);
 use File::Spec::Functions qw(catfile);

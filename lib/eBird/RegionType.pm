@@ -1,5 +1,6 @@
-use v5.36;
+use v5.38;
 use utf8;
+no feature qw(module_true);
 
 package eBird::RegionType;
 
@@ -32,9 +33,52 @@ defined parts and joins them with a dash, C<->, to form the region
 string. For the United States, New York, you have C<US-NY>. For the
 Albany area, you have C<US-NY-001>.
 
-=head2 Methods
+=head2 Constructors
 
 =over 4
+
+=item * new()
+
+This is a constructor that is inherited by the concrete classes but will croak
+in this class. This creates flyweight singletons. There are no arguments.
+
+=cut
+
+sub new ($class) {
+	state $known = {};
+	croak sprintf qq(Can't call method "new" via package "%s". This is only available in concrete types."), __PACKAGE__
+		if $class eq __PACKAGE__;
+	return $known->{$class} //= bless {}, $class;
+	}
+
+=item * new_for(REGION_TYPE)
+
+Returns an region type object for C<REGION_TYPE>.
+
+=cut
+
+sub new_for ($class, $type) {
+	$class->_new_type("\u\L$type");
+	}
+
+=back
+
+=head2 Instance methods
+
+These are common to all region type classes.
+
+=over 4
+
+=item * code
+
+Returns the "code" that the API mentions, such as C<parentRegionCode>. For the
+modules for region types, this is the last part of the name, lowercased:
+
+=cut
+
+sub code ($self) {
+	lc( blessed($self) =~ s/.*:://r );
+	}
 
 =item * has_parent_region
 
@@ -94,6 +138,10 @@ sub is_world          { 0 }
 Returns the type for the larger division. In this class, that is L<eBird::RegionType::Null>,
 and each concrete class overrides this if they are part of a larger division.
 
+=item * region_types
+
+Returns the list of region type strings.
+
 =item * sub_region_type
 
 Returns the type for the smaller division. In this class, that is L<eBird::RegionType::Null>,
@@ -104,26 +152,8 @@ and each concrete class overrides this if they comprise smaller divisions.
 sub parent_region_type ($self) { 'eBird::RegionType::Null' };
 sub sub_region_type    ($self) { 'eBird::RegionType::Null' };
 
-
-=head2
-
-=over 4
-
-=item * new()
-
-This is a constructor that is inherited by the concrete classes but will croak
-in this class. This creates flyweight singletons. There are no arguments.
-
-=cut
-
-sub new ($class)     {
-	state $known = {};
-	croak sprintf qq(Can't call method "new" via package "%s". This is only available in concrete types."), __PACKAGE__
-		if $class eq __PACKAGE__;
-	return $known->{$class} //= bless {}, $class;
-	}
-
 =back
+
 
 =pod
 
@@ -177,5 +207,26 @@ sub _new_type ( $class, $type_class ) {
 	}
 
 =back
+
+=head1 SOURCE AVAILABILITY
+
+This source is in Github:
+
+	http://github.com/briandfoy/ebird
+
+=head1 AUTHOR
+
+brian d foy, C<< <brian d foy> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2023-2026, brian d foy, All Rights Reserved.
+
+You may use this code under the terms of the Artistic License 2.0.
+
+The eBird API and its data have their own terms of use:
+https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=cut
 
 __PACKAGE__;

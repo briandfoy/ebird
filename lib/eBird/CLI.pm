@@ -1,4 +1,6 @@
 use v5.20;
+use utf8;
+
 package eBird::CLI;
 use experimental qw(signatures);
 
@@ -132,7 +134,7 @@ sub load_commands ($self) {
 		$self->logger->trace( "looking in dir <$dir> for command module" );
 		my $sub_dir = Mojo::File->new($dir)->child( @namespace_dirs );
 		next unless -d $sub_dir;
-		opendir my $dh, $sub_dir;
+		opendir my($dh), $sub_dir;
 		my @files =
 			map  { Mojo::File->new( @namespace_dirs )->child($_) }
 			grep { /\b[A-Z_]\w*\.pm\z/ai }

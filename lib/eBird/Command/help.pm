@@ -1,4 +1,5 @@
 use v5.38;
+use utf8;
 no feature qw(module_true);
 
 package eBird::Command::help;

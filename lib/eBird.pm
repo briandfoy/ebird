@@ -1,4 +1,7 @@
-use v5.36;
+use v5.38;
+use utf8;
+no feature qw(module_true);
+
 use experimental qw(signatures);
 
 package eBird;
@@ -38,7 +41,7 @@ eBird - Access to the eBird API
 
 =over 4
 
-=item new
+=item * new
 
 =cut
 
@@ -52,27 +55,27 @@ sub new ( $class, %args ) {
 		logger
 		);
 
-	$args{api_key} //= $ENV{EBIRD_API_KEY};
+	$args{'api_key'} //= $ENV{'EBIRD_API_KEY'};
+	$ENV{'EBIRD_API_KEY'} = $args{'api_key'};
 
-	if( defined $args{logger} ) {
-		weaken($args{logger});
+	if( defined $args{'logger'} ) {
+		weaken($args{'logger'});
 		}
 	else {
-		$args{logger} = Mojo::Log->new;
+		$args{'logger'} = Mojo::Log->new;
 		}
 
-	if( defined $args{cache} ) {
-		weaken($args{cache});
+	if( defined $args{'cache'} ) {
+		weaken($args{'cache'});
 		}
 	else {
-		$args{cache} = eBird::Cache->new;
+		$args{'cache'} = eBird::Cache->new;
 		}
 
 	my $self = bless {
 		%defaults,
 		map { $_, $args{$_} } grep { $allowed{$_} } keys %args,
 		}, $class;
-
 
 	$self->add_endpoints;
 
@@ -81,7 +84,11 @@ sub new ( $class, %args ) {
 	return $self;
 	}
 
-sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
+=item * add_endpoints
+
+Finds each C<eBird::Endpoint> modules and calls C<add_endpoint> with it.
+
+=cut
 
 sub add_endpoints ($self) {
 	state $endpoints = [
@@ -90,6 +97,17 @@ sub add_endpoints ($self) {
 
 	$self->add_endpoint($_) for $endpoints->@*;
 	}
+
+=item * add_endpoint( NAMESPACE )
+
+This loads the namespace and creates a method based on the C<name> method
+from C<NAMESPACE>.  For example, for C<eBird::Endpoint::Geo->name> returns
+C<geo>, so this method creates a C<geo> method that returns the a C<eBird::Endpoint::Geo>
+object:
+
+	$eBird->geo->...
+
+=cut
 
 sub add_endpoint ($self, $namespace) {
 	$self->load_module($namespace) or return;
@@ -103,6 +121,11 @@ sub add_endpoint ($self, $namespace) {
 
 	return 1;
 	}
+
+=item * get
+
+
+=cut
 
 sub get ( $self, %args ) {
 	state $base = do {
@@ -134,7 +157,7 @@ sub get ( $self, %args ) {
 
 		my $tx = $self->ua->get( $url );
 		$data = $tx->res->body;
-
+		$self->logger->debug( $tx->req->to_string );
 		$self->cache->save( $args{cache_key}, $data ) if defined $args{cache_key};
 
 		if( $tx->res->headers->content_type =~ /json/ ) {
@@ -156,6 +179,10 @@ sub get ( $self, %args ) {
 
 	return $data;
 	}
+
+=item * load_module
+
+=cut
 
 sub load_module ($self, $namespace) {
 	my $file = catfile( split /::/, $namespace ) . '.pm';
@@ -208,7 +235,7 @@ sub ua  ( $self ) { $self->{ua} }
 =cut
 
 sub expand_path_template ( $self, $path_template, $args = {} ) {
-	$path_template =~ s/\{\{ \s* (\S+) \s* \}\}/$args->{$1}/xgr;
+	$path_template =~ s/\{\{ \s* (\S+?) \s* \}\}/$args->{$1}/xgr;
 	}
 
 =item * logger
