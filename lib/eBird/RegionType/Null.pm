@@ -36,6 +36,10 @@ ones specific for Null.
 
 =over 4
 
+=item * code
+
+Returns the empty list.
+
 =item * is_in_name
 
 Returns false always. This region never shows up in the string for the
@@ -51,7 +55,7 @@ Returns false always, while all other types return true.
 
 =cut
 
-
+sub code           { return }
 sub is_in_name     { 0 }
 sub is_null        { 1 }
 sub is_type        { 0 }
