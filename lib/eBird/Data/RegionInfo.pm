@@ -112,38 +112,3 @@ bless( {
   "result" => "United States",
   "type" => "country"
 }, 'eBird::Data::RegionInfo' )
-
-  bless( {
-    "bounds" => {
-      "maxX" => "-73.7199760975619",
-      "maxY" => "40.6525033107414",
-      "minX" => "-73.8199760975619",
-      "minY" => "40.5525033107414"
-    },
-    "code" => "L6587285",
-    "latitude" => "40.6025033107414",
-    "longitude" => "-73.7699760975619",
-    "parent" => {
-      "code" => "US-NY-081",
-      "latitude" => 0,
-      "longitude" => 0,
-      "parent" => {
-        "code" => "US-NY",
-        "latitude" => 0,
-        "longitude" => 0,
-        "parent" => {
-          "code" => "US",
-          "latitude" => 0,
-          "longitude" => 0,
-          "result" => "United States",
-          "type" => "country"
-        },
-        "result" => "New York, United States",
-        "type" => "subnational1"
-      },
-      "result" => "Queens, New York, United States",
-      "type" => "subnational2"
-    },
-    "result" => "Norton Basin Natural Resource Area",
-    "type" => "loc"
-  }, 'eBird::Data::RegionInfo' ),
