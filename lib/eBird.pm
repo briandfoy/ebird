@@ -66,13 +66,16 @@ sub new ( $class, %args ) {
 		}
 	else {
 		$args{'logger'} = Mojo::Log->new;
+		$args{'logger'}->level('warn');
 		}
 
 	if( defined $args{'cache'} ) {
 		weaken($args{'cache'});
 		}
 	else {
-		$args{'cache'} = eBird::Cache->new;
+		$args{'cache'} = eBird::Cache->new(
+			logger => $args{'logger'},
+			);
 		}
 
 	my $self = bless {
