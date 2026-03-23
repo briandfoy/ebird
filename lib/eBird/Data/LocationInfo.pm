@@ -5,6 +5,9 @@ no feature qw(module_true);
 package eBird::Data::LocationInfo;
 use parent qw(eBird::Data::Base);
 
+use namespace::autoclean;
+use Storable qw(dclone);
+
 use eBird;
 use eBird::RegionType;
 
@@ -42,14 +45,9 @@ the region.
 sub contains ($self, $latlong) {
 	my $B = $self->bounds;
 
-	my $r = ( $B->minX <= $latlong->long and $latlong->long <= $B->maxX )
-		&&
+	( $B->minX <= $latlong->long and $latlong->long <= $B->maxX )
+	&&
 	( $B->minY <= $latlong->lat  and $latlong->lat  <= $B->maxY );
-return $r unless $r;
-	printf "%s <= %s <= %s\n", $B->minX, $latlong->long, $B->maxX;
-	printf "%s <= %s <= %s\n", $B->minY, $latlong->lat,  $B->maxY;
-	printf "%s: %d\n", $self->parent->code, $r;
-	$r;
 	}
 
 =item * label
