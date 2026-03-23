@@ -33,21 +33,16 @@ eBird::Endpoint::Hotspot -
 
 
 
-sub hotspots_in_region ( $self, $country, $subnational1 = undef, $subnational2 = undef ) {
-	state $path_template = 'ref/hotspot/{{ region_code }}';
+sub hotspots_in_region ( $self, $region ) {
+	state $path_template = 'ref/hotspot/{{regionCode}}';
 
-	my $region = join( "-",
-				grep { defined } ($country, $subnational1, $subnational2)
-				);
-	my $cache_key = "hotspots-$region";
-
-	my $data = $self->get(
-		path_template => $path_template,
-		cache_key     => $cache_key,
+	my $data = $self->ebird->get(
 		args => {
-			region_code => $region,
+			regionCode => $region->code,
 			},
+		cache_key     => 'hotspots-' . $region->code,
 		json => 0,
+		path_template => $path_template,
 		);
 
 	$self->parse_location_csv( $data );
