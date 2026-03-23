@@ -2,21 +2,16 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::Data::Country;
+package eBird::Data::Location;
 use parent qw(eBird::Data::Base);
 
 =encoding utf8
 
 =head1 NAME
 
-eBird::Data::Country - the representation of country information
+eBird::Data::Location - the representation of a location (hotspot or otherwise)
 
 =head1 SYNOPSIS
-
-	my $countries = $eBird->region->countries;
-	foreach my $c ( $countries->@* ) {
-		printf "%2s  -->  %s\n", $c->short_code, $c->name;
-		}
 
 =head1 DESCRIPTION
 
@@ -24,17 +19,11 @@ These objects represent the countries that eBird understands.
 
 =over 4
 
-=item * name
-
-Returns the full name of the country.
-
-=item * short_code
-
-An alias for C<code>.
+=item * location_id
 
 =cut
 
-sub short_code ($self) { $self->code }
+sub location_id ($self) { $self->locId }
 
 =back
 

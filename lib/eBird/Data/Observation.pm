@@ -2,14 +2,14 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::Data::Country;
+package eBird::Data::Observation;
 use parent qw(eBird::Data::Base);
 
 =encoding utf8
 
 =head1 NAME
 
-eBird::Data::Country - the representation of country information
+eBird::Data::Observation - the representation of country information
 
 =head1 SYNOPSIS
 
@@ -24,17 +24,13 @@ These objects represent the countries that eBird understands.
 
 =over 4
 
-=item * name
+=item * location_id
 
-Returns the full name of the country.
-
-=item * short_code
-
-An alias for C<code>.
+A synonym for C<locID>.
 
 =cut
 
-sub short_code ($self) { $self->code }
+sub location_id ($self) { $self->locId }
 
 =back
 

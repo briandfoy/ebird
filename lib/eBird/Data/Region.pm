@@ -3,7 +3,7 @@ use utf8;
 no feature qw(module_true);
 
 package eBird::Data::Region;
-use parent qw(Hash::AsObject);
+use parent qw(eBird::Data::Base);
 
 use eBird;
 
