@@ -94,7 +94,7 @@ Finds each C<eBird::Endpoint> modules and calls C<add_endpoint> with it.
 
 sub add_endpoints ($self) {
 	state $endpoints = [
-		map { "eBird::Endpoint::$_" } qw(Geo Region)
+		map { "eBird::Endpoint::$_" } qw(Hotspot Geo Observation Region)
 		];
 
 	$self->add_endpoint($_) for $endpoints->@*;
