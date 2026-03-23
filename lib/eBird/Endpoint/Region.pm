@@ -38,20 +38,25 @@ sub countries ( $self ) {
 		);
 	}
 
-=item * region_info_for( REGION )
+=item * info( REGION | LOCATION_ID )
 
 The major region, country, subnational1 or subnational2 code, or locId
 
 =cut
 
-sub region_info_for ( $self, $region ) {
+sub info ( $self, $region ) {
 	state $path_template = 'ref/region/info/{{region}}';
+
+	my $bless_into = do {
+		if( $region =~ /\AL/ ) { 'LocationInfo' }
+		else                   { 'RegionInfo'   }
+		};
 
 	$self->ebird->get(
 		args => {
 			region => $region,
 			},
-		bless_into    => 'eBird::Data::RegionInfo',
+		bless_into    => 'eBird::Data::' . $bless_into,
 		cache_key     => 'region-info-' . $region,
 		path_template => $path_template,
 		);

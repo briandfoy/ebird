@@ -53,7 +53,7 @@ sub hotspots_in_region ( $self, $country, $subnational1 = undef, $subnational2 =
 	$self->parse_location_csv( $data );
 	}
 
-=item * hotspot_info( LOC_ID )
+=item * info( LOC_ID )
 
 =cut
 
@@ -73,52 +73,56 @@ sub hotspots_in_region ( $self, $country, $subnational1 = undef, $subnational2 =
 #   "locID": "L99381"
 # }
 
-sub hotspot_info ( $self, $location_id ) {
-	state $path_template = 'ref/hotspot/info/{{ locid }}';
+sub info ( $self, $location_id ) {
+	state $path_template = 'ref/hotspot/info/{{locId}}';
 
-	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "hotspot-$location_id",
+	my $data = $self->ebird->get(
 		args => {
-			locid => $location_id,
+			locId => $location_id,
 			},
+		bless_into => 'eBird::Data::Location',
+		cache_key => "hotspot-$location_id",
+		path_template => $path_template,
 		);
-
-$self->logger->debug( dumper( $data ) );
-	unless( keys $data->%* ) {
-		$self->logger->warn( "There is no information for hotspot <$location_id>" );
-		}
-
-	eBird::Hotspot->new($data)
 	}
 
-=item * nearby_hotspots( LATITUDE, LONGITUDE, DISTANCE )
+=item * nearby( LATLONG, ARGS )
 
 =cut
 
-sub nearby_hotspots ($self, $latitude, $longitude, $distance = 25) {
+=begin comment
+
+Name   Values      Default  Description
+back  1-30        (none)  Only fetch hotspots which have been visited up to 'back' days ago.
+dist  0 - 500     25   The search radius from the given position, in kilometers.
+fmt   csv, json   csv  Fetch the records in CSV or JSON format.
+lat   -90 - 90         Required. Latitude to 2 decimal places.
+lng   -180 - 180       Required. Longitude to 2 decimal places.
+
+=end comment
+
+=cut
+
+sub nearby ($self, $latlong, $args) {
 	state $path_template = 'ref/hotspot/geo';
-	state $cache;
 
-	$latitude  = sprintf '%.2f', $latitude;
-	$longitude = sprintf '%.2f', $longitude;
+	$args->{'distance'} //= 25;
 
-	return $cache->{$latitude}{$longitude}{$distance}
-		if defined $cache->{$latitude}{$longitude}{$distance};
-
-	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "nearby-$latitude^$longitude-$distance",
+	my $data = $self->ebird->get(
 		args => {},
-		query => {
-			lat  => $latitude,
-			lng  => $longitude,
-			dist => $distance,
-			},
+		bless_into => 'eBird::Data::Location',
+		cache_key  => sprintf("nearby-%s^%s-%s", $latlong->lat, $latlong->long, $args->{'distance'}),
 		json => 0,
+		path_template => $path_template,
+		query => {
+			lat  => $latlong->lat,
+			lng  => $latlong->long,
+			dist => $args->{'distance'},
+			fmt  => 'csv',
+			},
 		);
 
-	$self->parse_location_csv( $data );
+	$self->ebird->parse_location_csv($data);
 	}
 
 =back
