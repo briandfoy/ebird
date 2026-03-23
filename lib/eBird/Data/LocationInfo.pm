@@ -12,7 +12,7 @@ use eBird::RegionType;
 
 =head1 NAME
 
-eBird::Data::RegionInfo - the representation of region information
+eBird::Data::LocationInfo - the representation of location information
 
 =head1 SYNOPSIS
 
