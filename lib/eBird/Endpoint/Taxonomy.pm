@@ -101,24 +101,25 @@ sub species_code_to_common_name ( $self, $species_code ) {
 	}
 
 
-=item * taxonomy
+=item * taxa
 
 =cut
 
-sub taxonomy ( $self, %query ) {
-	state $path_template = 'ref/taxonomy/ebird';
-	state $format = 'csv';
+sub taxa ( $self, %query ) {
+	$query{'format'}    = 'csv';
+	$query{'version'}   = $self->latest_version,
+	$query{'locale'}  //= 'en';
 
-	$query{locale}  //= 'en';
-
-	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "taxonomy-$query{locale}",
-		query         => \%query,
+	my $data = $self->ebird->get(
+		args          => {},
+		bless_into    => 'eBird::Data::Base',
+		cache_key     => "taxonomy-$query{'locale'}-$query{'version'}",
 		json          => 0,
+		path_template => 'ref/taxonomy/ebird',
+		query         => \%query,
 		);
 
-	$self->parse_taxonomy_csv( $data );
+	$self->ebird->parse_taxonomy_csv( $data );
 	}
 
 sub _taxonomy_by ( $self, $method, $substring ) {
@@ -204,26 +205,61 @@ sub forms ( $self, $species_code ) {
 		);
 	}
 
-=item * taxa_locales
+=item * locale_codes
 
 =cut
 
-sub taxa_locales ( $self ) {
+sub locale_codes ( $self ) {
 	state $path_template = 'ref/taxa-locales/ebird';
 
-	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "locales",
-		args => {},
+	my $data = $self->ebird->get(
+		args          => {},
+		bless_into    => "eBird::Data::LocaleCode",
+		cache_key     => "taxa-locale-codes",
+		path_template => 'ref/taxa-locales/ebird',
 		);
-
-	my %hash;
-	foreach my $locale ( $data->@* ) {
-		$hash{ $locale->{code} } = $locale;
-		}
-
-	return \%hash;
 	}
+
+
+=item * groups( GROUPING )
+
+Return the species group for C<GROUPING>, which is either C<ebird> or C<merlin>.
+
+=cut
+
+sub groups ($self, $species_group = 'ebird') {
+	my $namespace = $species_group eq 'ebird' ? 'eBird' : ucfirst(lc($species_group));
+
+	my $data = $self->ebird->get(
+		args          => {
+			speciesGrouping => $species_group
+			},
+		bless_into    => sprintf('eBird::Data::%sSpeciesGroup', $namespace),
+		cache_key     => 'species-group-' . $species_group,
+		path_template => 'ref/sppgroup/{{speciesGrouping}}',
+		);
+	}
+
+=item * ebird_groups
+
+This calls C<groups> for the C<ebird> set.
+
+=cut
+
+sub ebird_groups ($self) {
+	$self->groups('ebird');
+	}
+
+=item * merlin_groups
+
+This calls C<groups> for the C<merlin> set.
+
+=cut
+
+sub merlin_groups ($self) {
+	$self->groups('merlin');
+	}
+
 
 =item * latest_version
 
@@ -247,40 +283,11 @@ Fetches all of the taxonomy versions
 =cut
 
 sub versions ( $self ) {
-	state $path_template = 'ref/taxonomy/versions';
-
 	my $data = $self->ebird->get(
 		args          => {},
 		bless_into    => 'eBird::Data::TaxonomyVersion',
 		cache_key     => 'versions',
-		path_template => $path_template,
-		);
-
-	}
-
-=item * taxa_groups
-
-=cut
-
-sub taxa_groups ( $self, %raw_args ) {
-	state $path_template = 'ref/sppgroup/{{grouping}}';
-	state @locales = qw(
-		bg cs da de en es es_AR es_CL es_CU es_ES es_MX es_PA fr he
-		is nl no pt_BR pt_PT ru sr th tr zh
-		);
-	state @groupings = qw(merlin ebird);
-
-	my %defaults = qw( grouping ebird );
-
-	my %args = ( qw(grouping ebird), %raw_args{qw(grouping)} );
-	my %query;
-	$query{'groupNameLocale'} = $raw_args{'locale'} // 'en';
-
-	$self->get(
-		path_template => $path_template,
-		cache_key => "groups-$query{'groupNameLocale'}-$args{'grouping'}",
-		args  => \%args,
-		query => \%query,
+		path_template => 'ref/taxonomy/versions',
 		);
 	}
 

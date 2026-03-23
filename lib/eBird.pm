@@ -141,7 +141,7 @@ sub get ( $self, %args ) {
 		Mojo::URL->new( $base );
 		};
 
-	$args{json} //= true;
+	$args{json} //= 1;
 
 	my $data;
 
@@ -270,6 +270,8 @@ sub cache ( $self ) { $self->{cache} //= eBird::Cache->new }
 sub parse_csv ( $self, $data, $headers, $bless_into ) {
 	state $rc = require Text::CSV_XS;
 
+	$self->load_module($bless_into) if defined $bless_into;
+
 	my $csv = Text::CSV_XS->new;
 	open my $fh, '<:encoding(UTF-8)', \$data;
 
@@ -313,7 +315,7 @@ sub parse_taxonomy_csv ( $self, $csv_data ) {
 		)
 		];
 
-	$self->parse_csv( $csv_data, $headers, 'eBird::Taxonomy' );
+	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Taxon' );
 	}
 
 =back
