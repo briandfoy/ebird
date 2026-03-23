@@ -21,6 +21,7 @@ use Mojo::JSON qw(decode_json);
 use Mojo::Log;
 use Mojo::Util qw(dumper);
 use Ref::Util qw(:all);
+use String::Redactable qw();
 
 use eBird::Cache;
 use eBird::Checklist;
@@ -57,6 +58,7 @@ sub new ( $class, %args ) {
 
 	$args{'api_key'} //= $ENV{'EBIRD_API_KEY'};
 	$ENV{'EBIRD_API_KEY'} = $args{'api_key'};
+	$args{'api_key'} = String::Redactable->new($args{'api_key'});
 
 	if( defined $args{'logger'} ) {
 		weaken($args{'logger'});
@@ -218,7 +220,7 @@ sub _setup_ua ( $self ) {
 
 	$self->{ua}->on(
 		start => sub ($ua, $tx) {
-        	$tx->req->headers->header( "X-eBirdApiToken", $self->api_key );
+        	$tx->req->headers->header( "X-eBirdApiToken", $self->api_key->to_str_unsafe );
         	}
 		);
 	}
