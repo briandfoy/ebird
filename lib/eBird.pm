@@ -51,6 +51,7 @@ sub new ( $class, %args ) {
 		api_base_url => 'https://api.ebird.org/v2',
 		);
 	state %allowed = map { $_, 1 } qw(
+		api_base_url
 		api_key
 		cache
 		logger
