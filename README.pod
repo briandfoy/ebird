@@ -12,7 +12,7 @@
 
 =for HTML <a href='https://coveralls.io/github/briandfoy/ebird?branch=master'><img src='https://coveralls.io/repos/github/briandfoy/ebird/badge.svg?branch=master' alt='Coverage Status' /></a>
 
-=for HTML <a href="https://github.com/briandfoy/antsy/blob/master/LICENSE"><img src="https://img.shields.io/cpan/l/eBird.svg" /></a>
+=for HTML <a href="https://github.com/briandfoy/ebird/blob/master/LICENSE"><img src="https://img.shields.io/cpan/l/eBird.svg" /></a>
 
 =for HTML <a href="https://metacpan.org/pod/eBird"><img src="https://img.shields.io/cpan/v/eBird.svg" /></A>
 
