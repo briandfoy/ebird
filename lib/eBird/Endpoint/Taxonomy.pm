@@ -4,8 +4,8 @@ no feature qw(module_true);
 
 package eBird::Endpoint::Taxonomy;
 use parent qw(eBird::Endpoint::Base);
-use experimental qw(builtin);
-use builtin qw(true false);
+
+use namespace::autoclean;
 
 =encoding utf8
 
@@ -21,9 +21,6 @@ use builtin qw(true false);
 
 =cut
 
-__PACKAGE__;
-
-__END__
 
 sub _code_matches ( $self, $type, $pattern ) {
 	foreach my $key ( keys $self->{$type}->%* ) {
@@ -236,8 +233,11 @@ sub taxa_versions ( $self ) {
 	state $path_template = 'ref/taxonomy/versions';
 
 	my $data = $self->get(
+		args          => {}
+		bless_into    => 'eBird::Data::TaxonomyVersion',
+		cache_key     => 'versions',
 		path_template => $path_template,
-		cache_key => 'versions',
+		json          => 0,
 		);
 	}
 
