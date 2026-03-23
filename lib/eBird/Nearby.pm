@@ -85,7 +85,7 @@ Returns the internal L<eBird> object.
 
 sub ebird ($self) { $self->{'ebird'} }
 
-=item * latlog
+=item * latlong
 
 Returns the internal L<eBird::LatLong> object.
 
