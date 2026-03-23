@@ -149,7 +149,7 @@ sub region ($self) {
 	my %d =
 		map  { $_->parent->code, $_ }
 		grep { $_->contains($self->latlong) }
-		map  { $self->ebird->region->info( $_->[0]->parent->code ) }
+		map  { $self->ebird->region->info( $_->parent->code ) }
 		map  { $self->ebird->region->info( $_->[0]->location_id  ) }
 		sort { $a->[1] <=> $b->[1] }
 		map  { [ $_, $self->latlong->distance_to($_) ] }
