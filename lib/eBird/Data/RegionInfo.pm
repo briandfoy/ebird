@@ -16,11 +16,6 @@ eBird::Data::RegionInfo - the representation of region information
 
 =head1 SYNOPSIS
 
-	my $countries = $eBird->region->countries;
-	foreach my $c ( $countries->@* ) {
-		printf "%2s  -->  %s\n", $c->short_code, $c->name;
-		}
-
 =head1 DESCRIPTION
 
 These objects represent the information eBird tracks about a region.
