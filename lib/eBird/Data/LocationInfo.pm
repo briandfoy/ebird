@@ -2,7 +2,7 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::Data::RegionInfo;
+package eBird::Data::LocationInfo;
 use parent qw(eBird::Data::Base);
 
 use eBird;
