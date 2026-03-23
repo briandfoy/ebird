@@ -140,8 +140,8 @@ sub get ( $self, %args ) {
 
 	my $data;
 
-	$self->logger->debug( "get: cache key is $args{cache_key}" );
-	$self->logger->debug( "get: args => " . dumper(\%args) );
+#	$self->logger->debug( "get: cache key is $args{cache_key}" );
+#	$self->logger->debug( "get: args => " . dumper(\%args) );
 
 	my $data;
 	if( defined $args{cache_key} ) {
@@ -159,7 +159,7 @@ sub get ( $self, %args ) {
 
 		my $tx = $self->ua->get( $url );
 		$data = $tx->res->body;
-		$self->logger->debug( $tx->req->to_string );
+# 		$self->logger->debug( $tx->req->to_string );
 		$self->cache->save( $args{cache_key}, $data ) if defined $args{cache_key};
 
 		if( $tx->res->headers->content_type =~ /json/ ) {
@@ -292,7 +292,7 @@ sub parse_location_csv ( $self, $csv_data ) {
 		)
 		];
 
-	$self->parse_csv( $csv_data, $headers, 'eBird::Hotspot' );
+	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
 	}
 
 =item * parse_taxonomy_csv

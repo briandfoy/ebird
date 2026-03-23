@@ -10,6 +10,8 @@ use Ref::Util qw(:all);
 our @EXPORT_OK;
 our %EXPORT_TAGS;
 
+$EXPORT_TAGS{'export'} = [qw(MODIFY_CODE_ATTRIBUTES ATTRIBUTE_EXPORT)];
+
 sub MODIFY_CODE_ATTRIBUTES ( $package, $code_ref, @attributes ) {
 	my( $sub_name ) = B::svref_2object( $code_ref )->GV->NAME;
 
