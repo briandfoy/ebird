@@ -20,6 +20,18 @@ These objects represent the countries that eBird understands.
 
 =over 4
 
+=item * is_latest
+
+=cut
+
+sub is_latest ($self) { $self->latest }
+
+=item * version
+
+=cut
+
+sub version ($self) { $self->authorityVer }
+
 =back
 
 =head1 SOURCE AVAILABILITY

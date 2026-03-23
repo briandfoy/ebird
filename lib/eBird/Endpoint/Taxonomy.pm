@@ -24,9 +24,9 @@ use namespace::autoclean;
 
 sub _code_matches ( $self, $type, $pattern ) {
 	foreach my $key ( keys $self->{$type}->%* ) {
-		return true if $key =~ /$pattern/i;
+		return 1 if $key =~ /$pattern/i;
 		}
-	return false;
+	return 0;
 	}
 
 sub banding_code_matches ( $self, $pattern ) {
@@ -115,7 +115,7 @@ sub taxonomy ( $self, %query ) {
 		path_template => $path_template,
 		cache_key => "taxonomy-$query{locale}",
 		query         => \%query,
-		json          => false,
+		json          => 0,
 		);
 
 	$self->parse_taxonomy_csv( $data );
@@ -225,20 +225,37 @@ sub taxa_locales ( $self ) {
 	return \%hash;
 	}
 
-=item * taxa_versions
+=item * latest_version
+
+Returns the version string of the latest taxonomy version
 
 =cut
 
-sub taxa_versions ( $self ) {
+sub latest_version ($self) {
+	my( $latest ) =
+		map  { $_->version }
+		grep { $_->is_latest }
+		$self->versions->@*;
+
+	$latest;
+	}
+
+=item * versions
+
+Fetches all of the taxonomy versions
+
+=cut
+
+sub versions ( $self ) {
 	state $path_template = 'ref/taxonomy/versions';
 
-	my $data = $self->get(
-		args          => {}
+	my $data = $self->ebird->get(
+		args          => {},
 		bless_into    => 'eBird::Data::TaxonomyVersion',
 		cache_key     => 'versions',
 		path_template => $path_template,
-		json          => 0,
 		);
+
 	}
 
 =item * taxa_groups
