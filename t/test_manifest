@@ -3,6 +3,7 @@ pod_coverage.t
 pod.t
 expand_path_template.t
 util.t
+latlong.t
 region_type.t
 endpoints/base.t
 endpoints/geo.t
