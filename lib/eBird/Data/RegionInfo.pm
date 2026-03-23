@@ -36,6 +36,16 @@ sub adjacent_regions ($self) {
 	eBird->new->geo->adjacent_regions( $self->code );
 	}
 
+=item * latlong
+
+Returns an L<eBird::LatLong> object for the geocoordinates of the region.
+
+=cut
+
+sub latlong ($self) {
+	eBird::LatLong->new_from_any($self);
+	}
+
 =item * contains( LATLONG )
 
 Returns true if the coordinates of C<LATLONG> are in the bounding box for
