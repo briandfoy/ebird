@@ -5,6 +5,9 @@ no feature qw(module_true);
 package eBird::Data::Base;
 use parent qw(Hash::AsObject);
 
+use namespace::autoclean;
+use Scalar::Util qw(blessed);
+
 =encoding utf8
 
 =head1 NAME
@@ -29,7 +32,12 @@ the hash. In our case, that will not be true so we override it.
 
 =cut
 
-sub can ($self, $method) { exists $self->{$method} }
+sub can ($self, $method) {
+	return 1 if blessed($self) && exists $self->{$method};
+	return 1 if blessed($self) && defined &{ join '::', blessed($self), $method};
+	return 1 if defined &{ join '::', $self, $method };
+	return 0;
+	}
 
 =back
 
