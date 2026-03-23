@@ -5,6 +5,10 @@ no feature qw(module_true);
 package eBird::Data::RegionInfo;
 use parent qw(eBird::Data::Base);
 
+use namespace::autoclean;
+use Scalar::Util qw(blessed);
+use Storable qw(dclone);
+
 use eBird;
 use eBird::RegionType;
 
@@ -55,6 +59,17 @@ sub contains ($self, $latlong) {
 =cut
 
 sub label ($self) { $self->result }
+
+=item * parent
+
+=cut
+
+sub parent ($self) {
+	return unless exists $self->{'parent'};
+
+	my $parent = dclone($self->{'parent'});
+	bless $parent, blessed($self);
+	}
 
 =item * region
 
