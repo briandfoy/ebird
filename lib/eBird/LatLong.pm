@@ -97,12 +97,10 @@ sub distance_to ($self, $any ) {
 	my $to = (blessed $self)->new_from_any($any);
 	return unless defined $to;
 
-	my $d = 1_000 * $gis->distance_metal(
+	1_000 * $gis->distance_metal(
 		$self->lat, $self->long,
 		$to->lat,   $to->long,
 		);
-
-	$d;
 	}
 
 =item * lat
