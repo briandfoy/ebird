@@ -33,10 +33,10 @@ eBird::Cache - handle the cache
 sub new ( $class, %args ) {
 	my %hash;
 
-	$hash{cache_dir} = Mojo::File->new(
-		$args{cache_dir} // catfile( $ENV{HOME}, '.ebird-perl', 'cache' )
+	$hash{'cache_dir'} = Mojo::File->new(
+		$args{'cache_dir'} // catfile( $ENV{HOME}, '.ebird-perl', 'cache' )
 		);
-	$hash{logger}    = $args{logger} // Mojo::Log->new;
+	$hash{'logger'}    = $args{'logger'} // Mojo::Log->new( level => 'warn' );
 
 	my $self = bless \%hash, $class;
 	}
@@ -66,7 +66,7 @@ sub _make_dir ( $self ) {
 		make_path $self->dir;
 		}
 	}
-sub dir ( $self ) { $self->{cache_dir} }
+sub dir ( $self ) { $self->{'cache_dir'} }
 
 
 =item * list()
