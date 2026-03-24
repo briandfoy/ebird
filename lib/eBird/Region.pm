@@ -4,6 +4,9 @@ no feature qw(module_true);
 
 package eBird::Region;
 use Exporter qw(import);
+use Scalar::Util qw(blessed);
+
+use eBird;
 
 use B;
 use Carp;
@@ -52,6 +55,186 @@ eBird::Region -
 	use eBird::Region qw(:all);
 
 =head1 DESCRITION
+
+=head2 Class Methods
+
+=over 4
+
+=item * new( REGION_CODE [, EBIRD] )
+
+=cut
+
+my sub is_valid_region_code ($region_code) {
+	$region_code =~ m/ \A
+		[A-Z]{2}
+		(
+			- [A-Z0-9]+
+			( - [A-Z0-9]+ )?
+		)?
+		\z/xn;
+	}
+
+sub new ( $class, $region_code, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
+	unless( is_valid_region_code($region_code) ) {
+		$ebird->io->error( shortmess("<$region_code> is not a valid eBird region string") );
+		return;
+		}
+
+	my @parts = split /-/, $region_code;
+
+	bless {
+		code     => $region_code,
+		ebird    => $ebird,
+		parts    => \@parts,
+		inflated => 0,
+		}, $class
+	}
+
+=item * new_from_any( ANY [, EBIRD] )
+
+C<ANY> is any object that can respond to the C<region_code> method.
+
+=cut
+
+sub new_from_any ( $class, $any, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
+	state $method_name = 'region_code';
+
+	my $error = do {
+		if( ! blessed($any) ) {
+			sprintf "first argument (%s) is not an object", $any;
+			}
+		elsif( ! $any->can('region_code') ) {
+			sprintf "Object of type %s does not respond to %s", blessed($any), $method_name;
+			}
+		elsif( defined $any->region_code ) {
+			sprintf "%s did not return a defined value", $method_name;
+			}
+		};
+
+	if( length $error ) {
+		$ebird->io->carp( $error );
+		return;
+		}
+
+	$class->new( $any->$method_name, $ebird );
+	}
+
+=back
+
+=head2 Instance Methods
+
+=over 4
+
+=item * code
+
+Returns the full region code.
+
+=cut
+
+sub code ($self) { $self->{'code'} }
+
+=item * ebird
+
+Returns the embedded L<eBird> instance.
+
+=cut
+
+sub ebird ($self) { $self->{'ebird'} }
+
+=item * inflate
+
+If this object has not been inflated (was constructed with just the region code),
+query eBird to add the rest of the details.
+
+=cut
+
+sub inflate ($self) {
+
+
+
+	}
+
+=item * parent_code
+
+Returns a new object for the parent region, or the empty list if there is no
+parent. This is based completely on the region code, and will not be an
+inflated object.
+
+=cut
+
+sub parent_code ($self) {
+	$self->parents->[0];
+	}
+
+=back
+
+=head2 Test methods
+
+=over 4
+
+=item * is_world
+
+Returns false always. This is here for parallel structure, but may be useful
+later.
+
+=cut
+
+sub is_world { 0 }
+
+=item * is_country
+
+Returns true if this region is the country level, with no subnational divisions.
+Returns false otherwise.
+
+=cut
+
+sub is_country ($self, @args) {
+
+	}
+
+=item * is_inflated
+
+Returns true if the object has been inflated, and false otherwise. See C<inflate>.
+
+=cut
+
+sub is_inflated ($self) { $self->{'inflated'} }
+
+=item * is_subnational1
+
+Returns true if this region is the subnational1 level, with no subnational2 division.
+Returns false otherwise.
+
+=cut
+
+sub is_subnational1 ($self, @args) {
+
+	}
+
+=item * is_subnational2
+
+Returns true if this region is the subnational2 level.
+
+=cut
+
+sub is_subnational2 ($self, @args) {
+
+	}
+
+=item * is_valid
+
+Returns true if the region code looks like a region code, even if there is no
+region with that code.
+
+=cut
+
+sub is_valid ($self) {
+	_is_valid_region_code( $self->code );
+	}
+
+=back
+
+=head2 Exportable methods for eBird
 
 =over 4
 
