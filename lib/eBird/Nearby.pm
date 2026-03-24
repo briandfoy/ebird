@@ -40,12 +40,12 @@ will create the L<eBird::LatLong> for you.
 
 =cut
 
-sub new ($class, $latlong, $ebird = eBird->new) {
+sub new ($class, $latlong, $ebird = eBird->new( io => eBird::IO->new_quiet )) {
 	my @errors;
 	push @errors, 'First argument must be an eBird::LatLong object' unless $latlong isa 'eBird::LatLong';
 	push @errors, 'Second argument must be an eBird object' unless $ebird isa 'eBird';
 	if( @errors ) {
-		carp join "\n", @errors;
+		$ebird->io->carp( @errors );
 		return;
 		}
 
@@ -66,7 +66,7 @@ The longitude methods are one of C<lon>, C<longitude>, C<lon>, or C<x>.
 
 =cut
 
-sub new_from_any ( $class, $any, $ebird = eBird->new ) {
+sub new_from_any ( $class, $any, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
 	my $latlong = eBird::LatLong->new_from_any($any);
 	$class->new( $latlong, $ebird );
 	}
