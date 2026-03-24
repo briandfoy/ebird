@@ -14,6 +14,9 @@ foreach my $taxon ( $taxa->@* ) {
 	}
 say Mojo::Util::dumper(\%categories);
 
+my $subspecies = $ebird->taxonomy->forms('cangoo');
+say Mojo::Util::dumper($subspecies);
+
 __END__
 https://science.ebird.org/en/use-ebird-data/the-ebird-taxonomy
 {
