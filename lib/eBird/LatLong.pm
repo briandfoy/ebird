@@ -4,9 +4,12 @@ no feature qw(module_true);
 
 package eBird::LatLong;
 use namespace::autoclean;
-use Carp qw(carp);
+use Carp qw(croak);
 use List::Util qw(first);
 use Scalar::Util qw(blessed looks_like_number);
+
+use eBird;
+use eBird::IO;
 
 =encoding utf8
 
@@ -25,7 +28,7 @@ geocoordinates module.
 
 =over 4
 
-=item * new_from_decimal( $lat, $long )
+=item * new_from_decimal( $lat, $long [, eBird] )
 
 Creates a new L<eBird::LatLong> object from two floating point numbers. The
 latitude must be inclusively between [-90,90] and the longitude must be between
@@ -33,20 +36,33 @@ latitude must be inclusively between [-90,90] and the longitude must be between
 
 =cut
 
-sub new_from_decimal ($class, $lat, $long) {
+sub new_from_decimal {
+	my( $class, @args ) = @_;
+	my $ebird = do {
+		if( $args[-1] isa 'eBird' ) { pop @args }
+		else { eBird->new( io => eBird::IO->new_quiet )}
+		};
+
+	my( $lat, $long ) = @args;
+
+	unless( defined $lat and defined $long ) {
+		croak "Too few arguments for new_from_decimal";
+		}
+
 	no warnings qw(numeric);
 	unless( looks_like_number($lat) and looks_like_number($long) ) {
-		carp "Latitude ($lat) must be in [-90,90] and Longitude ($long) must be in [-180,180]";
+		$ebird->io->carp("Latitude ($lat) must be in [-90,90] and Longitude ($long) must be in [-180,180]");
 		return;
 		}
 	unless( abs($lat) <= 90 and abs($long) <= 180 ) {
-		carp "Latitude ($lat) must be in [-90,90] and Longitude ($long) must be in [-180,180]";
+		$ebird->io->carp("Latitude ($lat) must be in [-90,90] and Longitude ($long) must be in [-180,180]");
 		return;
 		}
 
 	bless {
-		lat  => sprintf( '%.2f', $lat  ),
-		long => sprintf( '%.2f', $long ),
+		lat   => sprintf( '%.2f', $lat  ),
+		long  => sprintf( '%.2f', $long ),
+		ebird => $ebird,
 		}, $class;
 	}
 
@@ -64,7 +80,7 @@ If C<ANY> is this class or one derived from it, it returns the same object.
 
 =cut
 
-sub new_from_any ( $class, $any ) {
+sub new_from_any ( $class, $any, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
 	return $any if $any isa $class;
 
 	my($lat_method)  = grep { $any->can($_) } qw(lat latitude y);
@@ -73,7 +89,7 @@ sub new_from_any ( $class, $any ) {
 	my $lat  = $any->$lat_method;
 	my $long = $any->$long_method;
 
-	$class->new_from_decimal( $lat, $long );
+	$class->new_from_decimal( $lat, $long, $ebird );
 	}
 
 =back

@@ -4,6 +4,9 @@ use lib qw(lib);
 
 use Test::More 1.0;
 
+use eBird;
+use eBird::IO;
+
 my $class  = 'eBird::LatLong';
 my $method = 'new_from_decimal';
 
@@ -43,8 +46,18 @@ subtest sanity => sub {
 subtest $method => sub {
 	subtest 'bad' => sub {
 		my $warnings;
-		$SIG{'__WARN__'} = sub { $warnings .= $_[0] };
-		$SIG{'__DIE__'}  = sub { $warnings .= $_[0] };
+		open my $sfh, '>', \$warnings
+			or die "Could not open string filehandle: $!";
+
+		local $SIG{'__WARN__'} = sub { $warnings .= $_[0] };
+		local $SIG{'__DIE__'}  = sub { $warnings .= $_[0] };
+
+		my $ebird = eBird->new(
+			io => eBird::IO->new(
+					output_fh => $sfh,
+					error_fh  => $sfh,
+				)
+			);
 
 		my @table = (
 			[ 'no args',                                   [],              qr/Too few arguments/ ],
@@ -61,7 +74,7 @@ subtest $method => sub {
 			$warnings = '';
 			my( $label, $args, $pattern ) = $row->@*;
 			subtest $label => sub {
-				my $obj = eval { $class->$method( $args->@* ) };
+				my $obj = eval { $class->$method( $args->@*, $ebird ) };
 				ok ! defined $obj, 'no object for bad args';
 				like $warnings, $pattern, 'warning matches';
 				};
