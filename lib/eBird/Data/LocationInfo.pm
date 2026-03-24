@@ -32,7 +32,7 @@ Retrieves the regions that touch this region.
 =cut
 
 sub adjacent_regions ($self) {
-	eBird->new->geo->adjacent_regions( $self->code );
+	$self->ebird->geo->adjacent_regions( $self->code );
 	}
 
 =item * contains( LATLONG )

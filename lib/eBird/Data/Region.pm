@@ -46,13 +46,13 @@ The same thing as C<code>
 =cut
 
 sub adjacent_regions ($self) {
-	eBird->new->geo->adjacent_regions($self->code);
+	$self->ebird->geo->adjacent_regions($self->code);
 	}
 
 sub code  ($self) { $self->{'code'} }
 
 sub info ($self) {
-	eBird->new->region->region_info_for($self->code);
+	$self->ebird->region->region_info_for($self->code);
 	}
 
 sub label ($self)  { $self->name }
