@@ -25,6 +25,7 @@ use String::Redactable qw();
 
 use eBird::Cache;
 use eBird::Checklist;
+use eBird::IO;
 
 use eBird::Region qw(:all);
 
@@ -46,15 +47,17 @@ eBird - Access to the eBird API
 
 =cut
 
-sub new ( $class, %args ) {
+sub new ($class, %args) {
 	state %defaults = (
 		api_base_url => 'https://api.ebird.org/v2',
+		io           => eBird::IO->new,
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_base_url
 		api_key
 		cache
 		logger
+		io
 		);
 
 	$args{'api_key'} //= $ENV{'EBIRD_API_KEY'};
@@ -99,7 +102,7 @@ Finds each C<eBird::Endpoint> modules and calls C<add_endpoint> with it.
 sub add_endpoints ($self) {
 	state $endpoints = [
 		map { "eBird::Endpoint::$_" }
-			qw(Hotspot Geo Observation Region Taxonomy)
+			qw(Hotspot Geo Observation Product Region Taxonomy)
 		];
 
 	$self->add_endpoint($_) for $endpoints->@*;
@@ -215,6 +218,9 @@ sub api_base_url ( $self ) { $self->{api_base_url} // 'https://api.ebird.org/v2/
 
 =item * api_key
 
+Returns the API key object, which is a L<String::Redactable> object to protect
+the sensitive value.
+
 =cut
 
 sub api_key ( $self ) { $self->{api_key} }
@@ -230,11 +236,21 @@ sub _setup_ua ( $self ) {
 		);
 	}
 
-=item * ua
+=item * io
+
+Returns the C<io> object to use for all output.
 
 =cut
 
-sub ua  ( $self ) { $self->{ua} }
+sub io ($self) { $self->{'io'} }
+
+=item * ua
+
+Returns the web user-agent
+
+=cut
+
+sub ua  ($self) { $self->{'ua'} }
 
 
 =item * expand_path_template
