@@ -39,6 +39,17 @@ sub can ($self, $method) {
 	return 0;
 	}
 
+=item * ebird
+
+Return a quiet L<eBird> object. s
+
+=cut
+
+sub ebird {
+	state $rc = do { require eBird; require eBird::IO };
+	eBird->new( io => eBird::IO->new_quiet )
+	}
+
 =back
 
 =head1 SOURCE AVAILABILITY
