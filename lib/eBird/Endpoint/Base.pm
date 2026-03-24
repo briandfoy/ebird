@@ -49,8 +49,8 @@ C<eBird::Endpoint::Geo> would turn into C<geo>.
 
 =cut
 
-sub name ($self) {
-	last_namespace_portion($self);
+sub name ($class) {
+	last_namespace_portion($class);
 	}
 
 =back
@@ -66,6 +66,7 @@ Returns the weakened L<eBird> instance.
 =cut
 
 sub ebird ($self) { $self->{'ebird'} }
+
 
 =back
 
