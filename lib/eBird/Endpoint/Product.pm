@@ -2,7 +2,12 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
+package eBird::Endpoint::Product;
+use parent qw(eBird::Endpoint::Base);
+
 =encoding utf8
+
+eBird::Endpoint::Region -
 
 =head1 NAME
 
@@ -12,51 +17,123 @@ no feature qw(module_true);
 
 =over 4
 
-=item *
+=item * top_100_contributors( REGION, DATE )
 
 =cut
 
-sub top_100_contributors ( $self, $date, $country, $subnational1 = undef, $subnational2 = undef ) {
-	state $path_template = 'product/top100/{{ region_code }}/{{ year }}/{{ month }}/{{ day }}';
+=begin comment
 
+rankedBy      spp, cl     spp     Order by number of complete checklists (cl) or by number of species seen (spp).
+maxResults    1 - 100     (all)   Only fetch this number of contributors.
+
+=end comment
+
+=cut
+
+sub top_100_contributors ( $self, $region, $date, $query = {} ) {
 	my( $year, $month, $day ) = $date =~ m/\A(\d{4})(\d{2})(\d{2})\z/a;
 
-	my $region = join( "-",
-				grep { defined } ($country, $subnational1, $subnational2)
-				);
-
 	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "top100-$region-$date",
 		args => {
-			region_code => $region,
-			year  => $year,
-			month => $month,
-			day   => $day,
+			regionCode => $region->code,
+			'y' => $year,
+			'm' => $month,
+			'd' => $day,
 			},
+		bless_into    => 'eBird::Data::Base',
+		cache_key     => "top100-$region-$date",
+		path_template => 'product/top100/{{regionCode}}/{{y}}/{{m}}/{{d}',
 		);
 
 	[ map { bless $_, 'eBird::Contributor::Stat'; } $data->@* ];
 	}
 
 
-=item * recent_checklists
+=item * recent_checklists( REGION )
 
 =cut
 
-sub recent_checklists ( $self, $country, $subnational1 = undef, $subnational2 = undef) {
-	state $path_template = 'product/lists/{{ region }}';
+=begin comment
 
-	my $region = join( "-",
-				grep { defined } ($country, $subnational1, $subnational2)
-				);
+maxResults	1 - 200	10	Only fetch this number of checklists.
 
+=end comment
+
+=cut
+
+sub recent_checklists ( $self, $region, $query = {} ) {
 	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "recent_checklists-$region",
 		args => {
-			region => $region,
+			regionCode => $region->code,
 			},
+		bless_into    => 'eBird::Data::Checklist',
+		cache_key => "recent_checklists-$region",
+		path_template => 'product/lists/{{regionCode}}',
+		);
+	}
+
+=item * checklists_on_date( REGION, DATE )
+
+=cut
+
+=begin comment
+
+sortKey	obs_dt, creation_dt	obs_dt	Order the results by the date of the checklist or by the date it was submitted. maxResults	1 - 200	10	Only fetch this number of checklists.
+
+=end comment
+
+=cut
+
+sub checklists_on_date ( $self, $region, $date, $query = {} ) {
+	my $data = $self->get(
+		args => {
+			regionCode => $region->code,
+			},
+		bless_into    => 'eBird::Data::Checklist',
+		cache_key     => "checklists-$region-$date",
+		path_template => 'product/lists/{{regionCode}}/{{y}}/{{m}}/{{d}}',
+		query         => $query,
+		);
+	}
+
+=item * regional_stats_on_date( REGION, DATE )
+
+
+=cut
+
+=begin comment
+
+sortKey     obs_dt,creation_dt	obs_dt   Order the results by the date of the checklist or by the date it was submitted.
+maxResults  1 - 200	            10       Only fetch this number of checklists.
+
+=end comment
+
+=cut
+
+sub regional_stats_on_date ( $self, $region, $date, $query = {} ) {
+	my $data = $self->get(
+		args => {
+			regionCode => $region,
+			},
+		bless_into    => 'eBird::Data::Stats',
+		cache_key     => "checklists-$region-$date",
+		path_template => 'product/lists/{{regionCode}}/{{y}}/{{m}}/{{d}}',
+		query         => $query,
+		);
+	}
+
+=item * species_in_region( REGION )
+
+=cut
+
+sub species_in_region ( $self, $region ) {
+	my $data = $self->get(
+		args => {
+			regionCode => $region->code,
+			},
+		bless_into    => 'eBird::Data::Base',
+		cache_key     => "species-list-" . $region->code,
+		path_template => 'product/spplist/{{regionCode}}',
 		);
 	}
 
@@ -65,17 +142,14 @@ sub recent_checklists ( $self, $country, $subnational1 = undef, $subnational2 = 
 =cut
 
 sub view_checklist ( $self, $checklist_id ) {
-	state $path_template = 'product/checklist/view/{{ checklist_id }}';
-
 	my $data = $self->get(
-		path_template => $path_template,
-		cache_key => "checklist-$checklist_id",
 		args => {
-			checklist_id => $checklist_id,
+			subId => $checklist_id,
 			},
+		bless_into    => 'eBird::Data::Checklist',
+		cache_key     => "checklist-$checklist_id",
+		path_template => 'product/checklist/view/{{subId}}',
 		);
-
-	my $object = eBird::Checklist->new( $data );
 	}
 
 =back
