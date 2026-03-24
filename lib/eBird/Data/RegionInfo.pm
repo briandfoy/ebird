@@ -33,7 +33,7 @@ Retrieves the regions that touch this region.
 =cut
 
 sub adjacent_regions ($self) {
-	eBird->new->geo->adjacent_regions( $self->code );
+	$self->ebird->geo->adjacent_regions( $self->code );
 	}
 
 =item * latlong
@@ -56,12 +56,9 @@ the region.
 sub contains ($self, $latlong) {
 	my $B = $self->bounds;
 
-	my $r =
-		( $B->minX <= $latlong->long and $latlong->long <= $B->maxX )
-		&&
-		( $B->minY <= $latlong->lat  and $latlong->lat  <= $B->maxY );
-
-	$r;
+	( $B->minX <= $latlong->long and $latlong->long <= $B->maxX )
+	&&
+	( $B->minY <= $latlong->lat  and $latlong->lat  <= $B->maxY );
 	}
 
 =item * label
