@@ -24,7 +24,7 @@ use Ref::Util qw(:all);
 use String::Redactable qw();
 
 use eBird::Cache;
-use eBird::Checklist;
+use eBird::Config;
 use eBird::IO;
 use eBird::Util;
 
@@ -34,15 +34,57 @@ use eBird::Region qw(:all);
 
 =head1 NAME
 
-eBird - Access to the eBird API
+eBird - play with the eBird API and website
 
 =head1 SYNOPSIS
 
 	use eBird;
 
+	my $ebird = eBird->new;
+
 =head1 DESCRIPTION
 
+The C<eBird> module coordinates the various things the rest of the system
+needs.
+
+=head2 Class methods
+
 =over 4
+
+=item * default_api_base
+
+Returns the default base URL for the eBird API, I<https://api.ebird.org/v2>.
+
+=cut
+
+sub default_api_base ($class) { 'https://api.ebird.org/v2' }
+
+=item * default_cache_dir
+
+Creates the cache dir if it does not exist, and returns its path. By default,
+this directory is named C<cache> under the directory from C<default_dir>.
+
+=cut
+
+sub default_cache_dir ($class) { $class->default_dir->child('cache')->make_path }
+
+=item * default_config_file
+
+Creates the config file (empty) if it does not exist, and returns its path.
+By default, this is F<config.toml> under the directory from C<default_dir>.
+
+=cut
+
+sub default_config_file ($class) { $class->default_dir->child('config.toml')->touch }
+
+=item * default_dir
+
+Returns the default directory for L<eBird>, which is F<.ebird-perl> under the
+home directory.
+
+=cut
+
+sub default_dir ($class) { Mojo::File->new($ENV{'HOME'})->child('.ebird-perl')->make_path }
 
 =item * new
 
@@ -51,36 +93,19 @@ eBird - Access to the eBird API
 sub new ($class, %args) {
 	state %defaults = (
 		api_base_url => 'https://api.ebird.org/v2',
+		cache        => eBird::Cache->new( dir => $class->default_cache_dir  ),
+		config       => eBird::Config->new( $class->default_config_file ),
 		io           => eBird::IO->new,
-		local        => 'en',
 		logger       => do { my $log = Mojo::Log->new; $log->level('warn'); $log },
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_base_url
-		api_key
 		cache
+		config
 		io
 		locale
 		logger
 		);
-
-	$args{'api_key'} //= $ENV{'EBIRD_API_KEY'};
-	$ENV{'EBIRD_API_KEY'} = $args{'api_key'};
-	$args{'api_key'} = String::Redactable->new($args{'api_key'});
-
-	weaken($args{'logger'}) if defined $args{'logger'};
-
-	if( defined $args{'cache'} ) {
-		weaken($args{'cache'});
-		}
-	else {
-		$args{'cache'} = eBird::Cache->new(
-			logger => $args{'logger'},
-			io     => $args{'io'},
-			);
-		}
-
-	$args{'locale'} //= $class->guess_locale;
 
 	my $self = bless {
 		%defaults,
@@ -93,6 +118,12 @@ sub new ($class, %args) {
 
 	return $self;
 	}
+
+=back
+
+=head2 Instance methods
+
+=over 4
 
 =item * add_endpoints
 
@@ -133,25 +164,15 @@ sub add_endpoint ($self, $namespace) {
 	return 1;
 	}
 
-=item * guess_locale
-
-=cut
-
-sub guess_locale ($class) {
-	'en'
-	}
-
 =back
-
-=head2 Instance methods
-
-=over 4
 
 =item * api_base_url
 
+Returns the API base URL that the object is using, or the default value.
+
 =cut
 
-sub api_base_url ( $self ) { $self->{api_base_url} // 'https://api.ebird.org/v2/' }
+sub api_base_url ( $self ) { $self->{'api_base_url'} // $self->default_api_base }
 
 =item * api_key
 
@@ -160,15 +181,15 @@ the sensitive value.
 
 =cut
 
-sub api_key ( $self ) { $self->{api_key} }
+sub api_key ( $self ) { $self->config->api->api_key }
 
 sub _setup_ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
-	$self->{ua} = Mojo::UserAgent->new;
+	$self->{'ua'} = Mojo::UserAgent->new;
 
-	$self->{ua}->on(
+	$self->{'ua'}->on(
 		start => sub ($ua, $tx) {
-        	$tx->req->headers->header( "X-eBirdApiToken", $self->api_key->to_str_unsafe );
+        	$tx->req->headers->header( "X-eBirdApiToken", $self->config->api->api_key->to_str_unsafe );
         	}
 		);
 	}
@@ -178,7 +199,19 @@ sub _setup_ua ( $self ) {
 
 =cut
 
-sub cache ( $self ) { $self->{cache} //= eBird::Cache->new }
+sub cache ( $self ) { $self->{'cache'} //= eBird::Cache->new( dir => $self->default_cache_dir ) }
+
+=item * config
+
+=cut
+
+sub config ( $self ) { $self->{'config'} //= eBird::Config->new( $self->default_config_file ) }
+
+=item * dir
+
+=cut
+
+sub dir ( $self ) { $self->{'dir'} //= $self->default_dir }
 
 =item * expand_path_template
 
@@ -259,7 +292,7 @@ sub get ( $self, %args ) {
 
 =cut
 
-sub locale ($self) { $self->{locale} };
+sub locale ($self) { $self->config->general->locale };
 
 =item * logger
 
@@ -284,11 +317,11 @@ anything using. The default
 
 =item * ua
 
-Returns the web user-agent
+Returns the web user-agent.
 
 =cut
 
-sub ua  ($self) { $self->{'ua'} }
+sub ua ($self) { $self->{'ua'} }
 
 
 =back
