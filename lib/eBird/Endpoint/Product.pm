@@ -5,9 +5,11 @@ no feature qw(module_true);
 package eBird::Endpoint::Product;
 use parent qw(eBird::Endpoint::Base);
 
+use eBird::Data::Taxon;
+
 =encoding utf8
 
-eBird::Endpoint::Region -
+eBird::Endpoint::Product -
 
 =head1 NAME
 
@@ -33,7 +35,7 @@ maxResults    1 - 100     (all)   Only fetch this number of contributors.
 sub top_100_contributors ( $self, $region, $date, $query = {} ) {
 	my( $year, $month, $day ) = $date =~ m/\A(\d{4})(\d{2})(\d{2})\z/a;
 
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			regionCode => $region->code,
 			'y' => $year,
@@ -62,12 +64,12 @@ maxResults	1 - 200	10	Only fetch this number of checklists.
 =cut
 
 sub recent_checklists ( $self, $region, $query = {} ) {
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			regionCode => $region->code,
 			},
 		bless_into    => 'eBird::Data::Checklist',
-		cache_key => "recent_checklists-$region",
+		cache_key     => "recent_checklists-$region",
 		path_template => 'product/lists/{{regionCode}}',
 		);
 	}
@@ -85,7 +87,7 @@ sortKey	obs_dt, creation_dt	obs_dt	Order the results by the date of the checklis
 =cut
 
 sub checklists_on_date ( $self, $region, $date, $query = {} ) {
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			regionCode => $region->code,
 			},
@@ -111,7 +113,7 @@ maxResults  1 - 200	            10       Only fetch this number of checklists.
 =cut
 
 sub regional_stats_on_date ( $self, $region, $date, $query = {} ) {
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			regionCode => $region,
 			},
@@ -124,15 +126,16 @@ sub regional_stats_on_date ( $self, $region, $date, $query = {} ) {
 
 =item * species_in_region( REGION )
 
+
 =cut
 
 sub species_in_region ( $self, $region ) {
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			regionCode => $region->code,
 			},
-		bless_into    => 'eBird::Data::Base',
 		cache_key     => "species-list-" . $region->code,
+		callback      => sub ($item) { eBird::Data::Taxon->new_from_code($item) },
 		path_template => 'product/spplist/{{regionCode}}',
 		);
 	}
@@ -142,7 +145,7 @@ sub species_in_region ( $self, $region ) {
 =cut
 
 sub view_checklist ( $self, $checklist_id ) {
-	my $data = $self->get(
+	my $data = $self->ebird->get(
 		args => {
 			subId => $checklist_id,
 			},

@@ -6,6 +6,7 @@ package eBird::Endpoint::Taxonomy;
 use parent qw(eBird::Endpoint::Base);
 
 use namespace::autoclean;
+use eBird::Util qw();
 
 =encoding utf8
 
@@ -21,6 +22,12 @@ eBird::Endpoint::Taxonomy -
 
 =over 4
 
+=item * default_locale
+
+=cut
+
+sub default_locale { 'en' }
+
 =item * ebird_groups
 
 This calls C<groups> for the C<ebird> set.
@@ -30,7 +37,6 @@ This calls C<groups> for the C<ebird> set.
 sub ebird_groups ($self) {
 	$self->groups('ebird');
 	}
-
 
 =item * forms( SPECIES_CODE )
 
@@ -104,25 +110,65 @@ sub merlin_groups ($self) {
 	$self->groups('merlin');
 	}
 
-=item * taxa
+=item * parse_taxonomy_csv
+
+Calls C<parse_csv> from L<eBird::Util> with the appropriate settings.
 
 =cut
 
-sub taxa ( $self, %query ) {
+sub parse_taxonomy_csv ($self, $csv_data) {
+	state $headers = [
+		qw(
+			scientific_name common_name species_code category taxon_order
+			com_name_codes sci_name_codes banding_codes order family_com_name
+			family_sci_name report_as extinct extinct_year
+		)
+		];
+
+	eBird::Util::parse_csv( $csv_data, $headers, 'eBird::Data::Taxon' );
+	}
+
+=item * taxa(ARGS)
+
+Loads the latest version of the taxonomy data for the locale of the L<eBird>
+object this object is using.
+
+=cut
+
+sub taxa ( $self, %args ) {
+	my %query;
 	$query{'format'}    = 'csv';
 	$query{'version'}   = $self->latest_version,
-	$query{'locale'}  //= 'en';
+	$query{'locale'}    = $args{'locale'} // $self->ebird->locale;
 
 	my $data = $self->ebird->get(
 		args          => {},
 		bless_into    => 'eBird::Data::Base',
-		cache_key     => "taxonomy-$query{'locale'}-$query{'version'}",
+		cache_key     => $self->taxa_cache_file( @query{qw(locale version)} ),
 		json          => 0,
 		path_template => 'ref/taxonomy/ebird',
 		query         => \%query,
 		);
 
-	$self->ebird->parse_taxonomy_csv( $data );
+	$self->parse_taxonomy_csv($data);
+	}
+
+=item * taxa_cache_file()
+
+=cut
+
+sub taxa_cache_file ($self, $locale = $self->default_locale, $version = $self->latest_version ) {
+	join '-', 'taxonomy', $locale, $version;
+	}
+
+=item * taxa_for_species( SPECIES_CODES )
+
+Not yet implemented.
+
+=cut
+
+sub taxa_for_species( $self, @species ) {
+	$self->ebird->io->carp( "taxa_for_species not yet implemented" );
 	}
 
 =item * versions

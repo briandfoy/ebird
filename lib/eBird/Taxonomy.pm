@@ -20,182 +20,85 @@ eBird::Taxonomy -
 
 =over 4
 
-=cut
+=item * new( EBIRD )
 
-
-sub _code_matches ( $self, $type, $pattern ) {
-	foreach my $key ( keys $self->{$type}->%* ) {
-		return 1 if $key =~ /$pattern/i;
-		}
-	return 0;
-	}
-
-=item * banding_code_matches
 
 =cut
 
-sub banding_code_matches ( $self, $pattern ) {
-	$self->_code_matches( 'banding_codes', $pattern );
+sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet)) {
+	state $self;
+	return $self if defined $self;
+
+	$self = bless { ebird => $ebird }, $class;
+
+	# this is big, but we cache the results too, and this is a singleton
+	$self->{'taxonomy'} = $ebird->taxonomy->taxa;
+
+	$self->invert_taxonomy;
 	}
 
-=item * common_name_matches
+=begin comment
+
+{}
+    "banding_codes" => "",
+    "category" => "slash",
+    "com_name_codes" => "WTGF LGFI LEGF",
+    "common_name" => "Wedge-tailed/Lesser Grass-Finch",
+    "extinct" => "",
+    "extinct_year" => "",
+    "family_com_name" => "Tanagers and Allies",
+    "family_sci_name" => "Thraupidae",
+    "order" => "Passeriformes",
+    "report_as" => "",
+    "sci_name_codes" => "EMHE EMYP",
+    "scientific_name" => "Emberizoides herbicola/ypiranganus",
+    "species_code" => "y00437",
+    "taxon_order" => "35505.0"
+  }, 'eBird::Data::Taxon' ),
+
+  bless( {
+    "banding_codes" => "",
+    "category" => "spuh",
+    "com_name_codes" => "",
+    "common_name" => "passerine sp.",
+    "extinct" => "",
+    "extinct_year" => "",
+    "family_com_name" => "",
+    "family_sci_name" => "",
+    "order" => "Passeriformes",
+    "report_as" => "",
+    "sci_name_codes" => "",
+    "scientific_name" => "Passeriformes sp.",
+    "species_code" => "passer1",
+    "taxon_order" => "35852.0"
+  }, 'eBird::Data::Taxon' ),
+
+=end comment
 
 =cut
 
-sub common_name_matches ( $self, $pattern ) {
-	$self->common_name =~ m/$pattern/;
+sub invert_taxonomy ($self) {
+
+
 	}
 
-=item * common_name_code_matches
+sub create_sqlite ($self) {
+	return unless eBird::Util::has_sqlite();
+
+
+
+	}
+
+sub filter ( $self, $callback, $locale ) {
+
+	foreach my $taxa ( $self->ebird->)
+
+	}
 
 =cut
 
-sub common_name_code_matches ( $self, $pattern ) {
-	$self->_code_matches( 'com_name_codes', $pattern );
-	}
 
-=item * genus
 
-=cut
-
-sub genus ( $self ) {
-	$self->{genus} //= ( split /\s+/, $self->scientific_name )[0];
-	}
-
-=item * genus_matches
-
-=cut
-
-sub genus_matches ( $self, $pattern ) {
-	$self->genus =~ m/$pattern/;
-	}
-
-=item * family
-
-=cut
-
-sub family ( $self ) {
-	$self->family_sci_name;
-	}
-
-=item * family_matches
-
-=cut
-
-sub family_matches ( $self, $pattern ) {
-	$self->family_sci_name =~ m/$pattern/;
-	}
-
-=item * order_matches
-
-=cut
-
-sub order_matches ( $self, $pattern ) {
-	$self->order =~ m/$pattern/;
-	}
-
-=item * species
-
-=cut
-
-sub species ( $self ) {
-	$self->{species} //= ( split /\s+/, $self->scientific_name )[1];
-	}
-
-=item * species_matches
-
-=cut
-
-sub species_matches ( $self, $pattern ) {
-	$self->species =~ m/$pattern/;
-	}
-
-=item * subspecies
-
-=cut
-
-sub subspecies ( $self ) {
-	$self->{subspecies} //= ( split /\s+/, $self->scientific_name )[2];
-	return defined $self->{subspecies} ? $self->{subspecies} : ();
-	}
-
-=back
-
-=head2 Taxonomy
-
-=over 4
-
-=item * species_code_to_common_name
-
-=cut
-
-sub species_code_to_common_name ( $self, $species_code ) {
-	state $index = do {
-		my $taxonomy = $self->taxonomy;
-		my %results;
-		foreach my $item ( $self->taxonomy->@* ) {
-			$results{$item->species_code} = $item;
-			}
-
-		\%results;
-		};
-
-	$self->logger->debug( "species_code_to_common_name: $species_code" );
-
-	eval { $index->{$species_code}->common_name } // $species_code;
-	}
-
-sub _taxonomy_by ( $self, $method, $substring ) {
-	my $taxonomy = $self->taxonomy;
-
-	my @results;
-	foreach my $item ( $taxonomy->@* ) {
-		next unless $item->$method( $substring );
-		push @results, $item;
-		}
-
-	return \@results;
-	}
-
-=item * taxonomy_by_band( BAND_SUBSTRING )
-
-=cut
-
-sub taxonomy_by_band ( $self, $pattern ) {
-	$self->_taxonomy_by( 'banding_code_matches', $pattern );
-	}
-
-=item * taxonomy_by_common_name( BAND_SUBSTRING )
-
-=cut
-
-sub taxonomy_by_common_name ( $self, $pattern ) {
-	$self->_taxonomy_by( 'common_name_matches', $pattern );
-	}
-
-=item * taxonomy_by_family( BAND_SUBSTRING )
-
-=cut
-
-sub taxonomy_by_family ( $self, $pattern ) {
-	$self->_taxonomy_by( 'family_matches', $pattern );
-	}
-
-=item * taxonomy_by_genus( BAND_SUBSTRING )
-
-=cut
-
-sub taxonomy_by_genus ( $self, $pattern ) {
-	$self->_taxonomy_by( 'genus_matches', $pattern );
-	}
-
-=item * taxonomy_by_order( BAND_SUBSTRING )
-
-=cut
-
-sub taxonomy_by_order ( $self, $pattern ) {
-	$self->_taxonomy_by( 'order_matches', $pattern );
-	}
 
 =item * taxonomy_all_bands()
 

@@ -66,8 +66,18 @@ sub _make_dir ( $self ) {
 		make_path $self->dir;
 		}
 	}
+
 sub dir ( $self ) { $self->{'cache_dir'} }
 
+=item * exists(NAME)
+
+Returns true if there is a cache item with C<NAME>, and false otherwise.
+
+=cut
+
+sub exists ($self, $name) {
+	-e $self->dir->child($name);
+	}
 
 =item * list()
 

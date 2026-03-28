@@ -5,6 +5,7 @@ no feature qw(module_true);
 package eBird::Util;
 use B;
 use Exporter qw(import);
+use File::Spec::Functions qw(catfile);
 use Ref::Util qw(:all);
 
 our @EXPORT_OK;
@@ -115,6 +116,16 @@ sub get_timezonedb_api_key :Export () {
 	$ENV{TIMEZONEDB_API_KEY};
 	}
 
+=item * has_sqlite()
+
+Returns true if L<DBD::SQLite> is available.
+
+=cut
+
+sub has_sqlite :Export () {
+	eval { require DBI; require DBD::SQLite };
+	}
+
 =item * latitude_in_range( LATITUDE )
 
 Returns true if the value of LATITUDE is between -90. and 90 inclusively.
@@ -152,6 +163,23 @@ sub last_namespace_portion :Export ($namespace) {
 		};
 
 	lc( $n =~ s/.*:://r );
+	}
+
+=item * load_module( MODULE, [EBIRD::IO])
+
+Loads C<NAMESPACE>, and carps if there is a problem. Use this to dynamically
+load modules that you might need only sometimes.
+
+=cut
+
+sub load_module ($namespace, $io = eBird::IO->new_quiet ) {
+	my $file = catfile( split /::/, $namespace ) . '.pm';
+	my $rc = eval { require $file };
+	if( $@ ) {
+		$io->carp( "Could not load <$namespace>: $@" );
+		return;
+		}
+	return $rc;
 	}
 
 =item * looks_like_checklist_id( STRING )
@@ -271,6 +299,30 @@ sub normalize_date :Export ($date) {
 		}
 
 	{ year => $year, month => $month, day => $day }
+	}
+
+=item * parse_csv( DATA, HEADERS, BLESS_INTO )
+
+=cut
+
+sub parse_csv ( $data, $headers, $bless_into ) {
+	state $rc = require Text::CSV_XS;
+
+	load_module($bless_into) if defined $bless_into;
+
+	my $csv = Text::CSV_XS->new;
+	open my $fh, '<:encoding(UTF-8)', \$data;
+
+	my @rows;
+	$csv->getline($fh); # ignore headers
+	while( my $row = $csv->getline($fh) ) {
+		my $object = { map { $headers->[$_] => $row->[$_] } 0 .. $#$headers };
+		$object = $bless_into->new( $object ) if defined $bless_into;
+		push @rows, $object;
+		}
+	close $fh;
+
+	return \@rows;
 	}
 
 =item * year_in_range( YEAR_NUMBER )

@@ -98,6 +98,21 @@ lng   -180 - 180       Required. Longitude to 2 decimal places.
 
 =cut
 
+=item * parse_location_csv
+
+=cut
+
+sub parse_location_csv ( $self, $csv_data ) {
+	state $headers = [
+		qw(
+			locId country subnational1 subnational2 latitude longitude
+			location_name last_observation all_time_species
+		)
+		];
+
+	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
+	}
+
 sub nearby ($self, $latlong, $args) {
 	state $path_template = 'ref/hotspot/geo';
 

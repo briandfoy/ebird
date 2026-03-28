@@ -15,6 +15,8 @@ our $VERSION = '0.001_01';
 
 =head1 NAME
 
+eBird::CLI - the general framework for the Perl C<ebird> command
+
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
@@ -27,12 +29,13 @@ our $VERSION = '0.001_01';
 
 Create the object that coordinates the command line interface.
 
-Keys
+Keys:
 
-	- api       - the object that handles the API bits (eBird::API)
-	- io
+    - api_key   - the eBird API key
+	- ebird     - the object that handles the API bits (eBird)
+	- io        - the object that handles IO (eBird::IO)
 	- logger    - a Mojo::Log compatible logging object
-	- log_level -
+	- log_level - the level of messages to output
 	- name      - the program name to declare
 	- version   - the version to declare
 
@@ -47,7 +50,7 @@ sub new ($class, %arguments) {
 	my %options = ( %defaults, %arguments );
 
 	my $self = bless {}, $class;
-	$self->{logger} = $options{logger} // Mojo::Log->new( level => $options{log_level} );
+	$self->{'logger'} = $options{'logger'} // Mojo::Log->new( level => $options{'log_level'} );
 
 	$self->{io} = $options{io} // eBird::IO->new;
 
@@ -57,23 +60,23 @@ sub new ($class, %arguments) {
 		return;
 		}
 
-	$self->{options} = \%options;
-	$self->{cache} = $options{cache};
-	$self->{api} = eBird->new(
+	$self->{'options'} = \%options;
+	$self->{'cache'}   = $options{cache};
+	$self->{'ebird'}   = eBird->new(
 		api_key => $options{api_key},
 		cache   => $self->cache,
 		logger  => $self->logger,
 		);
-	$self->{name} = $options{name};
-	$self->{version} = $options{version} // $class->VERSION;
+	$self->{'name'}    = $options{name};
+	$self->{'version'} = $options{version} // $class->VERSION;
 
 	$self->load_commands;
 
 	return $self;
 	}
 
-sub DESTROY ( $self ) {
-	delete $self->{api};
+sub DESTROY ($self) {
+	delete $self->{'ebird'};
 	}
 
 =back
@@ -82,25 +85,56 @@ sub DESTROY ( $self ) {
 
 =over 4
 
-=item * api
-
-Returns the object that handles the API details
-
-=cut
-
-sub api ( $self ) { $self->{api} }
-
 =item * cache
 
 =cut
 
-sub cache ( $self ) { $self->{cache} }
+sub cache ($self) { $self->{'cache'} }
 
 =item * io
 
+Returns the object that handles input and output. This is typically an
+L<eBird::IO> object.
+
 =cut
 
-sub io ( $self ) { $self->{io} }
+sub io ($self) { $self->{'io'} }
+
+=item * ebird
+
+Returns the object that handles the API details. This is typically an
+L<eBird> object.
+
+=cut
+
+sub ebird ($self) { $self->{'ebird'} }
+
+=item * exit(N)
+
+Exit with value C<N>.
+
+This exists so you can override this to test the program without actually
+exiting.
+
+=cut
+
+sub exit ($self, $n) { CORE::exit($n) }
+
+=item * exit_error
+
+Exit with value C<1>.
+
+=cut
+
+sub exit_error ($self) { $self->exit(1) }
+
+=item * exit_usage
+
+Exit with value C<2>.
+
+=cut
+
+sub exit_usage ($self) { $self->exit(2) }
 
 =item * logger
 
@@ -109,7 +143,7 @@ L<Mojo::Log>.
 
 =cut
 
-sub logger ( $self ) { $self->{logger} }
+sub logger ($self) { $self->{'logger'} }
 
 =item * name
 
@@ -117,7 +151,7 @@ Returns the name of the program, which is "ebird" by default.
 
 =cut
 
-sub name ($self ) { $self->{name} }
+sub name ($self) { $self->{'name'} }
 
 =item * load_commands
 
@@ -144,8 +178,6 @@ sub load_commands ($self) {
 			$self->load_file($file);
 			}
 		}
-
-
 	}
 
 =item * load_file
@@ -155,13 +187,20 @@ Load a module and register its commands.
 =cut
 
 sub load_file ($self, $file) {
+	state $loaded = {};
+	return $loaded->{$file} if exists $loaded->{$file};
+
+	$loaded->{$file} = 0;
 	$self->logger->trace( "Trying to load module <$file>" );
 	my $class;
 	eval "\$class = require q($file)";
+
 	if( $@ ) {
 		$self->logger->error( "Tried to load file <$file> but failed: $@" );
 		return;
 		}
+
+	$loaded->{$file} = 1;
 
 	$self->logger->trace( "Module name is <$class>" );
 	my $rc = $self->register( $class );
@@ -174,8 +213,8 @@ Returns the names of all the handlers as a list.
 
 =cut
 
-sub handlers ( $self ) {
-	values $self->{commands}->%*;
+sub handlers ($self) {
+	values $self->{'commands'}->%*;
 	}
 
 =item * register( CLASS )
@@ -184,7 +223,8 @@ Register a class that contains commands.
 
 =cut
 
-sub register ( $self, $class ) {
+$|++;
+sub register ($self, $class) {
 	unless( $class->can('register') ) {
 		$self->logger->error( "Tried to register <$class> but it does not have a register method" );
 		return;
@@ -192,13 +232,12 @@ sub register ( $self, $class ) {
 
 	my $handler = $class->register( $self );
 	my $name = $handler->name;
-	if( exists $self->{commands}{$name} ) {
+	if( exists $self->{'commands'}{$name} ) {
 		$self->logger->error( "A command with name <$name> already exists." );
 		return;
 		}
 
-	$self->{commands}{lc $name} = $handler;
-
+	$self->{'commands'}{lc $name} = $handler;
 	}
 
 =item * run( COMMAND, @ARGS )
@@ -208,8 +247,9 @@ and passes the C<ARGS> array.
 
 =cut
 
-sub run ( $self, $command, @args ) {
-	$self->{commands}{lc $command}->run( @args );
+sub run ($self, $command, @args) {
+	my $rc = $self->{'commands'}{lc $command}->run( @args );
+	defined $rc ? $self->exit($rc) : $self->exit_error;
 	}
 
 =item * version
@@ -218,8 +258,8 @@ Returns the version of the command.
 
 =cut
 
-sub version ( $self ) {
-	$self->{version};
+sub version ($self) {
+	$self->{'version'};
 	}
 
 =item * website
@@ -229,7 +269,7 @@ data.
 
 =cut
 
-sub website ( $self ) {
+sub website ($self) {
 	state $rc = require eBird::Website;
 	state $website = eBird::Website->new(
 		logger => $self->logger,

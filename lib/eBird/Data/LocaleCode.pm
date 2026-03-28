@@ -20,6 +20,22 @@ These objects represent the locale codes that eBird understands.
 
 =over 4
 
+=item * code
+
+Returns the short code for the locale, such as C<sv> for Swedish.
+
+=item * last_update
+
+Returns the date and time of the last update to the locale.
+
+=cut
+
+sub last_update ($self) { $self->lastUpdate }
+
+=item * name
+
+Returns the long name of the locale, such as C<Swedish>.
+
 =back
 
 =head1 SOURCE AVAILABILITY

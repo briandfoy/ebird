@@ -5,6 +5,8 @@ no feature qw(module_true);
 package eBird::Command::cache;
 use parent qw(eBird::Command);
 
+use namespace::autoclean;
+use File::Spec::Functions;
 use Mojo::Util qw(dumper);
 
 =encoding utf8
@@ -67,25 +69,54 @@ Returns C<list>.
 
 sub default_action ( $self ) { 'list' }
 
-=item * action_clear
+=item * action_clear( [-n], [PATTERN] )
+
+Remove every cache item.
+
+Note that many things will recreate all the items they need, which might
+heavily hit the eBird API.
+
+If the first argument is C<-n>, then no items are removed but the output will
+show what would be removed.
 
 =cut
 
-sub action_clear ( $self ) {
-	my $cache_list = $self->api->list_cache;
+sub action_clear ( $self, @args ) {
+	my $cache_list = $self->ebird->cache->list;
+
+	my $dry_run = 0;
+	if( $args[0] eq '-n' ) {
+		$dry_run = 1;
+		shift @args;
+		}
+
+	my $pattern = qr/./;
+	if( @args ) {
+		$pattern = eval { qr/$args[0]/ };
+		unless( defined $pattern ) {
+			$self->cli->io->error( "Invalid pattern <$args[0]>" );
+			$self->cli->exit_usage;
+			}
+		}
+
+	my $prefix = $dry_run ? 'Would remove' : 'Removed';
 
 	foreach my $item ( $cache_list->@* ) {
-		$self->cli->cache->remove( $item->[0] );
-		$self->cli->io->output( "Removed $item->[0]" );
+		next unless $item->[0] =~ $pattern;
+		my $rc = $self->cli->cache->remove( $item->[0] );
+		$prefix = 'Could not remove ' if( $rc == 1 and ! $dry_run );
+		$self->cli->io->output( "$prefix $item->[0]" );
 		}
 	}
 
-=item * action_list
+=item * action_delete(NAMES)
+
+Delete the named cache items.
 
 =cut
 
-sub action_list ( $self ) {
-	state $format = "%s      %s\n";
+sub action_delete ($self, @args) {
+	my $cache = $self->cli->cache;
 
 	$self->cli->io->output( <<~"HERE" );
 		# Cache directory: @{[$self->cli->cache->dir]}
@@ -93,7 +124,46 @@ sub action_list ( $self ) {
 		# --------------------------------------------
 		HERE
 
+	foreach my $arg (@args) {
+		my $path = catfile( $self->cli->ebird->cache->dir, $arg );
+		my $message = do {
+			   if( ! $cache->exists($arg) ) { "$arg does not exist"            }
+			elsif( ! $cache->remove($arg) ) { "$arg could not be removed ($!)" }
+			else                            { "$arg removed"                   }
+			};
+
+		$self->cli->ebird->io->output( $message );
+		}
+	}
+
+=item * action_list( [PATTERN] )
+
+List all of the cache items. If you specify a Perl pattern, list only the
+items that match that pattern.
+
+=cut
+
+sub action_list ( $self, @args ) {
+	state $format = "%s      %s";
+
+	my $pattern = qr/./;
+	if( @args ) {
+		$pattern = eval { qr/$args[0]/ };
+		unless( defined $pattern ) {
+			$self->cli->ebird->io->error( "Invalid pattern <$args[0]>" );
+			$self->cli->exit_usage;
+			}
+		}
+
+	$self->info_header;
+
+	if( 0 == $self->cli->cache->list->@* ) {
+		$self->cli->io->output( "\n<no items>" );
+		return;
+		}
+
 	foreach my $item ( $self->cli->cache->list->@* ) {
+		next unless $item->[0] =~ $pattern;
 		my $date = localtime( $item->[1] );
 		$self->cli->io->output( sprintf $format, $date, $item->[0] );
 		}
@@ -139,14 +209,6 @@ sub action_open ( $self, @args ) {
 
 	}
 
-=item * action_remove
-
-=cut
-
-sub action_remove ( $self, @args ) {
-	$self->cli->cache->remove( @args );
-	}
-
 =item * action_show
 
 =cut
@@ -155,6 +217,21 @@ sub action_show ( $self, @args ) {
 	$self->cli->io->output(
 		$self->cli->cache->load( $args[0] )
 		);
+	}
+
+=item * info_header
+
+Outputs the information header that shows the current cache location and
+the value from the environment.
+
+=cut
+
+sub info_header ( $self, @args ) {
+	$self->cli->io->output( <<~"HERE" );
+		# Cache directory: @{[$self->cli->cache->dir]}
+		# EBIRD_CACHE_DIR: @{[$ENV{EBIRD_CACHE_DIR} // '<not set>']}
+		# --------------------------------------------
+		HERE
 	}
 
 =back

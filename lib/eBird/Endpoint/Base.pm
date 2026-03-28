@@ -29,9 +29,9 @@ eBird::Endpoint::Base - basics for the endpoint classes
 
 This is the basic constructor for all classes under C<eBird::Endpoint>.
 
-	eBird::Endpoint::SomeEndpoint->new( ebird => $ebird );
+	eBird::Endpoint::Task->new( ebird => $ebird );
 
-You typically don't need to do this since C<eBird::load_module()> will handle
+You typically don't need to do this since C<eBird::Util::load_module()> will handle
 this for you.
 
 =cut

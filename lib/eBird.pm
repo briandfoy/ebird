@@ -26,6 +26,7 @@ use String::Redactable qw();
 use eBird::Cache;
 use eBird::Checklist;
 use eBird::IO;
+use eBird::Util;
 
 use eBird::Region qw(:all);
 
@@ -51,26 +52,23 @@ sub new ($class, %args) {
 	state %defaults = (
 		api_base_url => 'https://api.ebird.org/v2',
 		io           => eBird::IO->new,
+		local        => 'en',
+		logger       => do { my $log = Mojo::Log->new; $log->level('warn'); $log },
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_base_url
 		api_key
 		cache
-		logger
 		io
+		locale
+		logger
 		);
 
 	$args{'api_key'} //= $ENV{'EBIRD_API_KEY'};
 	$ENV{'EBIRD_API_KEY'} = $args{'api_key'};
 	$args{'api_key'} = String::Redactable->new($args{'api_key'});
 
-	if( defined $args{'logger'} ) {
-		weaken($args{'logger'});
-		}
-	else {
-		$args{'logger'} = Mojo::Log->new;
-		$args{'logger'}->level('warn');
-		}
+	weaken($args{'logger'}) if defined $args{'logger'};
 
 	if( defined $args{'cache'} ) {
 		weaken($args{'cache'});
@@ -78,8 +76,11 @@ sub new ($class, %args) {
 	else {
 		$args{'cache'} = eBird::Cache->new(
 			logger => $args{'logger'},
+			io     => $args{'io'},
 			);
 		}
+
+	$args{'locale'} //= $class->guess_locale;
 
 	my $self = bless {
 		%defaults,
@@ -120,7 +121,7 @@ object:
 =cut
 
 sub add_endpoint ($self, $namespace) {
-	$self->load_module($namespace) or return;
+	eBird::Util::load_module($namespace, $self) or return;
 	my $name = lc $namespace->name;
 	my $obj = $namespace->new( ebird => $self );
 
@@ -130,6 +131,61 @@ sub add_endpoint ($self, $namespace) {
 	}
 
 	return 1;
+	}
+
+=item * guess_locale
+
+=cut
+
+sub guess_locale ($class) {
+	'en'
+	}
+
+=back
+
+=head2 Instance methods
+
+=over 4
+
+=item * api_base_url
+
+=cut
+
+sub api_base_url ( $self ) { $self->{api_base_url} // 'https://api.ebird.org/v2/' }
+
+=item * api_key
+
+Returns the API key object, which is a L<String::Redactable> object to protect
+the sensitive value.
+
+=cut
+
+sub api_key ( $self ) { $self->{api_key} }
+
+sub _setup_ua ( $self ) {
+	state $rc = require Mojo::UserAgent;
+	$self->{ua} = Mojo::UserAgent->new;
+
+	$self->{ua}->on(
+		start => sub ($ua, $tx) {
+        	$tx->req->headers->header( "X-eBirdApiToken", $self->api_key->to_str_unsafe );
+        	}
+		);
+	}
+
+
+=item * cache
+
+=cut
+
+sub cache ( $self ) { $self->{cache} //= eBird::Cache->new }
+
+=item * expand_path_template
+
+=cut
+
+sub expand_path_template ( $self, $path_template, $args = {} ) {
+	$path_template =~ s/\{\{ \s* (\S+?) \s* \}\}/$args->{$1}/xgr;
 	}
 
 =item * get
@@ -175,12 +231,21 @@ sub get ( $self, %args ) {
 			}
 		}
 
+	if( $args{'callback'} ) {
+		foreach my $i ( 0 .. $data->$#* ) {
+			$data->[$i] = $args{'callback'}->($data->[$i]);
+			}
+		}
+
 	if( $args{'bless_into'} ) {
-		$self->load_module($args{'bless_into'});
-		if( is_arrayref($data) ) {
+		eBird::Util::load_module($args{'bless_into'});
+		if( is_arrayref($data) and ref $data->[0] ) {
 			foreach my $hash ( $data->@* ) {
 				bless $hash, $args{'bless_into'};
 				}
+			}
+		elsif( is_arrayref($data) ) {
+			bless $data, $args{'bless_into'}
 			}
 		elsif( is_hashref($data) ) {
 			bless $data, $args{'bless_into'};
@@ -190,51 +255,17 @@ sub get ( $self, %args ) {
 	return $data;
 	}
 
-=item * load_module
+=item * locale
 
 =cut
 
-sub load_module ($self, $namespace) {
-	my $file = catfile( split /::/, $namespace ) . '.pm';
-	my $rc = eval { require $file };
-	if( $@ ) {
-		carp "Could not load <$namespace>: $@";
-		return;
-		}
-	return $rc;
-	}
+sub locale ($self) { $self->{locale} };
 
-=back
-
-=head2 Instance methods
-
-=over 4
-
-=item * api_base_url
+=item * logger
 
 =cut
 
-sub api_base_url ( $self ) { $self->{api_base_url} // 'https://api.ebird.org/v2/' }
-
-=item * api_key
-
-Returns the API key object, which is a L<String::Redactable> object to protect
-the sensitive value.
-
-=cut
-
-sub api_key ( $self ) { $self->{api_key} }
-
-sub _setup_ua ( $self ) {
-	state $rc = require Mojo::UserAgent;
-	$self->{ua} = Mojo::UserAgent->new;
-
-	$self->{ua}->on(
-		start => sub ($ua, $tx) {
-        	$tx->req->headers->header( "X-eBirdApiToken", $self->api_key->to_str_unsafe );
-        	}
-		);
-	}
+sub logger ( $self ) { $self->{logger} //= Mojo::Log->new }
 
 =item * io
 
@@ -243,6 +274,13 @@ Returns the C<io> object to use for all output.
 =cut
 
 sub io ($self) { $self->{'io'} }
+
+=item * locale
+
+Returns the locale short code. This is the locale that we'll use throughout
+anything using. The default
+
+=cut
 
 =item * ua
 
@@ -253,142 +291,9 @@ Returns the web user-agent
 sub ua  ($self) { $self->{'ua'} }
 
 
-=item * expand_path_template
-
-=cut
-
-sub expand_path_template ( $self, $path_template, $args = {} ) {
-	$path_template =~ s/\{\{ \s* (\S+?) \s* \}\}/$args->{$1}/xgr;
-	}
-
-=item * logger
-
-=cut
-
-sub logger ( $self ) { $self->{logger} //= Mojo::Log->new }
-
-=item * output
-
-=cut
-
-sub output ( $self ) { $self->{output} }
-
-=item * cache
-
-=cut
-
-sub cache ( $self ) { $self->{cache} //= eBird::Cache->new }
-
-=item * parse_csv
-
-=cut
-
-sub parse_csv ( $self, $data, $headers, $bless_into ) {
-	state $rc = require Text::CSV_XS;
-
-	$self->load_module($bless_into) if defined $bless_into;
-
-	my $csv = Text::CSV_XS->new;
-	open my $fh, '<:encoding(UTF-8)', \$data;
-
-	my @rows;
-	$csv->getline($fh); # ignore headers
-	while( my $row = $csv->getline($fh) ) {
-		my $object = { map { $headers->[$_] => $row->[$_] } 0 .. $#$headers };
-		$object = $bless_into->new( $object ) if defined $bless_into;
-		push @rows, $object;
-		}
-	close $fh;
-
-	return \@rows;
-	}
-
-=item * parse_location_csv
-
-=cut
-
-sub parse_location_csv ( $self, $csv_data ) {
-	state $headers = [
-		qw(
-			locId country subnational1 subnational2 latitude longitude
-			location_name last_observation all_time_species
-		)
-		];
-
-	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
-	}
-
-=item * parse_taxonomy_csv
-
-=cut
-
-sub parse_taxonomy_csv ( $self, $csv_data ) {
-	state $headers = [
-		qw(
-			scientific_name common_name species_code category taxon_order
-			com_name_codes sci_name_codes banding_codes order family_com_name
-			family_sci_name report_as extinct extinct_year
-		)
-		];
-
-	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Taxon' );
-	}
-
 =back
-
-=head1 The API
-
-=head2 Observations
-
-=over 4
-
-=back
-
-=head2 Product
-
-=over 4
-
-=item * top_100_contributors( YYYYMMDD, $country, $subnational1 = undef, $subnational2 = undef )
-
-=cut
-
-package eBird::Contributor::Stat { use parent qw(Hash::AsObject) }
-
-
-=item * checklist_feed_on_date( )
-
-=cut
-
-sub checklist_feed_on_date ( $self, ) {
-	}
-
-=item * regional_stats_in_date ( $self, $date )
-
-=cut
-
-sub regional_stats_in_date ( $self, ) {
-
-	}
-
-=item * species_list_for_a_region()
-
-=cut
-
-sub species_list_for_a_region ( $self, ) {
-
-	}
-
-
-
-=back
-
-
-
-
-
 
 =head1 TO DO
-
 
 =head1 SEE ALSO
 

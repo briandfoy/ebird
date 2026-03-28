@@ -135,7 +135,6 @@ sub carp ( $self, @strings ) {
 	$self->send_it( $self->error_fh, Carp::shortmess(join "\n", @strings) =~ s/\n+\z//r );
 	}
 
-
 =item * error( ARRAY_OF_STRINGS )
 
 Join ARRAY_OF_STRINGS with a newline and send to the error filehandle.
@@ -151,6 +150,16 @@ sub error ( $self, @strings ) {
 	}
 
 sub error_fh ( $self ) { $self->{error_fh} }
+
+=item * optional_feature_needs( MODULE )
+
+Output a message that the program needs C<MODULE>.
+
+=cut
+
+sub optional_feature_needs ($self, $module) {
+	$self->error("Install $module to use this feature.");
+	}
 
 =item * output( ARRAY_OF_STRINGS )
 

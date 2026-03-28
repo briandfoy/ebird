@@ -83,6 +83,8 @@ my %WriteMakefile = (
 
 	'PREREQ_PM' => {
 		'Carp'                                         => '0',
+		'DBI'                                          => '0',
+		'DBD::SQLite'                                  => '0',
 		'Exporter'                                     => '0',
 		'File::Path'                                   => '0',
 		'File::Spec:Functions'                         => '0',
@@ -100,6 +102,7 @@ my %WriteMakefile = (
 		'Scalar::Util'                                 => '0',
 		'String::Redactable'                           => '0',
 		'Storable'                                     => '0',
+		'Text::CSV_XS'                                 => '0',
 		'Time::Moment'                                 => '0',
 		'parent'                                       => '0',
 		},

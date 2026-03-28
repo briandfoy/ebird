@@ -25,9 +25,8 @@ my $cli = eBird::CLI->new(
 	( length $ENV{EBIRD_API_KEY}   ? (api_key   => $ENV{EBIRD_API_KEY})   : () ),
 	);
 
+push @ARGV, 'help' unless @ARGV;
 $cli->run( @ARGV );
-
-
 
 sub select_cache_dir {
 	state $default = Mojo::File->new( $ENV{HOME} )->child('.ebird-perl' )->make_path;
@@ -53,19 +52,19 @@ ebird - command line interface to eBird
 	ebird checklist list
 	ebird checklist list --mine
 
-	ebird checkist list --top100 [region]
+	ebird checklist list --top100 [region]
 
 	ebird checklist fetch ABCDEDFG
+
+	ebird locale list
 
 	ebird track ABCDEDFG
 
 	ebird region list
 	ebird region list REGION
 
+
 	ebird
-
-
-
 
 =head1 DESCRIPTION
 

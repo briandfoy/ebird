@@ -2,21 +2,33 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::Command::help;
+package eBird::Command::locale;
 use parent qw(eBird::Command);
 
-use namespace::autoclean;
-use List::Util qw(max);
+use Mojo::Util qw(dumper);
+
+use eBird::Util qw(:all);
 
 =encoding utf8
 
 =head1 NAME
 
-eBird::Command::help - show the help message
+eBird::Command::locale - show taxonomic order information
 
 =head1 SYNOPSIS
 
-	% ebird help
+Default subcommand is C<list>:
+
+	% ebird locale
+	% ebird locale list
+
+Add a language code to list just those:
+
+	% ebird locale list en
+
+Add more than one if you like:
+
+	% ebird locale list en sv
 
 =head1 DESCRIPTION
 
@@ -26,27 +38,19 @@ eBird::Command::help - show the help message
 
 =item * default_action
 
-Returns C<show>.
+Returns C<list>.
 
 =cut
 
-sub default_action { 'show' }
+sub default_action { 'list' }
 
 =item * description
 
-Returns the description of the command
-
 =cut
 
-sub description { 'show the instructions' }
-
-=item * fallthrough_action
-
-Returns C<show>.
-
-=cut
-
-sub fallthrough_action { 'show' }
+sub description ( $self ) {
+	"Show the available locales"
+	}
 
 =back
 
@@ -54,25 +58,18 @@ sub fallthrough_action { 'show' }
 
 =over 4
 
-=item * action_show
+=item * action_list
 
 =cut
 
-sub action_show ( $self ) {
-	$self->cli->io->output( sprintf "%s %s\n", map {$self->cli->$_()} qw(name version) );
+sub action_list ( $self, @args ) {
+	my $data = $self->ebird->taxonomy->locale_codes;
 
-	$self->cli->io->output( "Commands:\n" );
-
-	my @handlers = sort { $a->name cmp $b->name } $self->cli->handlers;
-	my $max_length = max( map { length $_->name } @handlers );
-
-	foreach my $handler ( @handlers ) {
-		my $string = join " -   ",
-			sprintf( '%-*s', $max_length, $handler->name),
-			$handler->description;
-
-		$string =~ s/^(?!\R)/\t/gm;
-
+	my $alt = join '|', map { quotemeta($_) } @args;
+	my $pattern = qr/^(?:$alt)/;
+	foreach my $locale ( $data->@* ) {
+		next unless $locale->code =~ m/$pattern/;
+		my $string = sprintf '%-6s  -  %s', $locale->code, $locale->name;
 		$self->cli->io->output( "$string" );
 		}
 	}
@@ -80,6 +77,7 @@ sub action_show ( $self ) {
 =back
 
 =head1 TO DO
+
 
 =head1 SEE ALSO
 

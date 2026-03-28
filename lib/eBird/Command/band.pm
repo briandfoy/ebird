@@ -69,17 +69,7 @@ sub default_action { 'list' }
 =cut
 
 sub description ( $self ) {
-	"Dealing with eBird regions"
-	}
-
-=item * fallthrough_action()
-
-Returns C<fallthrough>.
-
-=cut
-
-sub fallthrough_action ( $self ) {
-	'fallthrough'
+	"Dealing with eBird bands"
 	}
 
 =back

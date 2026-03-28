@@ -33,12 +33,6 @@ sub new ( $class, $cli ) {
 	bless \%hash, $class;
 	}
 
-=back
-
-=head2 Instance methods
-
-=over 4
-
 =item * register
 
 =cut
@@ -47,20 +41,26 @@ sub register ( $class, $cli ) {
 	my $self = $class->new( $cli );
 	}
 
+=back
+
+=head2 Instance methods
+
+=over 4
+
 =item * cli
 
 =cut
 
 sub cli ($self) {
-	$self->{cli};
+	$self->{'cli'};
 	}
 
-=item * api
+=item * ebird
 
 =cut
 
-sub api ($self) {
-	$self->{cli}{api};
+sub ebird ($self) {
+	$self->cli->{'ebird'};
 	}
 
 =item * action_to_sub
@@ -85,9 +85,12 @@ sub description ( $self ) { "No description available" }
 
 =item * fallthrough_action
 
+Returns C<fallthrough>, the default default.
+
 =cut
 
-sub fallthrough_action { return }
+sub fallthrough_action { 'fallthrough' }
+
 
 =item * group
 
