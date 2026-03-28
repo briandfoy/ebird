@@ -7,6 +7,7 @@ use namespace::autoclean;
 use Carp qw(carp);
 use File::Path qw(make_path);
 use File::Spec::Functions qw(catfile);
+use Mojo::Log;
 use Mojo::Util qw(decode encode);
 
 =encoding utf8
@@ -33,8 +34,8 @@ eBird::Cache - handle the cache
 sub new ( $class, %args ) {
 	my %hash;
 
-	$hash{'cache_dir'} = Mojo::File->new(
-		$args{'cache_dir'} // catfile( $ENV{HOME}, '.ebird-perl', 'cache' )
+	$hash{'dir'} = Mojo::File->new(
+		$args{'dir'} // catfile( $ENV{HOME}, '.ebird-perl', 'cache' )
 		);
 	$hash{'logger'}    = $args{'logger'} // Mojo::Log->new( level => 'warn' );
 
@@ -67,7 +68,7 @@ sub _make_dir ( $self ) {
 		}
 	}
 
-sub dir ( $self ) { $self->{'cache_dir'} }
+sub dir ( $self ) { $self->{'dir'} }
 
 =item * exists(NAME)
 
