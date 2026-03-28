@@ -164,8 +164,6 @@ sub add_endpoint ($self, $namespace) {
 	return 1;
 	}
 
-=back
-
 =item * api_base_url
 
 Returns the API base URL that the object is using, or the default value.

@@ -19,6 +19,8 @@ use eBird::Util qw(:all);
 
 =head1 NAME
 
+eBird::Website - interact with the eBird website for parts the API does not provide
+
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION

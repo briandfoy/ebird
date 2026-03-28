@@ -108,11 +108,9 @@ sub new ( $class, $file = undef ) {
 
 =item * path
 
-Returns the path the config file
+Returns the path to the config file
 
-=cut
-
-=cut
+=back
 
 =head3 api config
 
