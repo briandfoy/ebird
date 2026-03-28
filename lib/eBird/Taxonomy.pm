@@ -77,28 +77,6 @@ sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet)) {
 
 =cut
 
-sub invert_taxonomy ($self) {
-
-
-	}
-
-sub create_sqlite ($self) {
-	return unless eBird::Util::has_sqlite();
-
-
-
-	}
-
-sub filter ( $self, $callback, $locale ) {
-
-	foreach my $taxa ( $self->ebird->)
-
-	}
-
-=cut
-
-
-
 
 =item * taxonomy_all_bands()
 
