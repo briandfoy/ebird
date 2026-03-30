@@ -144,7 +144,7 @@ done_testing();
 
 This source is in Github:
 
-	http://github.com/briandfoy/XXX
+	http://github.com/briandfoy/ebird
 
 =head1 AUTHOR
 
