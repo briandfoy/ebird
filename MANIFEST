@@ -1,4 +1,5 @@
 Changes
+examples/config.pl
 examples/countries.pl
 examples/ebird-io.pl
 examples/find_region.pl
@@ -20,6 +21,7 @@ lib/eBird/Command/band.pm
 lib/eBird/Command/banding.pm
 lib/eBird/Command/cache.pm
 lib/eBird/Command/checklist.pm
+lib/eBird/Command/config.pm
 lib/eBird/Command/db.pm
 lib/eBird/Command/family.pm
 lib/eBird/Command/help.pm
@@ -32,6 +34,7 @@ lib/eBird/Command/taxa.pm
 lib/eBird/Command/track.pm
 lib/eBird/Command/tree.pm
 lib/eBird/Command/version.pm
+lib/eBird/Config.pm
 lib/eBird/Data/Base.pm
 lib/eBird/Data/Country.pm
 lib/eBird/Data/eBirdSpeciesGroup.pm
@@ -75,6 +78,7 @@ script/ebird
 SECURITY.md
 sql/taxa.sql
 t/basic.t
+t/config.t
 t/endpoints/base.t
 t/endpoints/geo.t
 t/endpoints/hotspot.t
