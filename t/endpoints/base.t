@@ -10,7 +10,7 @@ my $class = 'eBird::Endpoint::Base';
 
 =head1 NAME
 
-t/endpoints/base.t - test the taxonomy endpoint
+t/endpoints/base.t - test the abstract endpoint stuff
 
 =head1 SYNOPSIS
 

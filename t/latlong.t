@@ -14,7 +14,7 @@ my $method = 'new_from_decimal';
 
 =head1 NAME
 
-eBird::LatLong - handle geocoordinates for eBird
+t/latlong.t -
 
 =head1 SYNOPSIS
 
@@ -121,12 +121,7 @@ subtest 'new_from_any' => sub {
 		is $any->lat,  $obj->lat,  'latitudes match';
 		is $any->long, $obj->long, 'longitude match';
 		}
-
-
-
-
 	};
-
 
 done_testing();
 

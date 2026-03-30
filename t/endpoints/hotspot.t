@@ -10,7 +10,7 @@ my $class = 'eBird::Endpoint::Hotspot';
 
 =head1 NAME
 
-t/endpoints/hotspot.t - test the taxonomy endpoint
+t/endpoints/hotspot.t - test the hotspot endpoint
 
 =head1 SYNOPSIS
 

@@ -10,7 +10,7 @@ my $class = 'eBird::Endpoint::Region';
 
 =head1 NAME
 
-t/endpoints/base.t - test the taxonomy endpoint
+t/endpoints/region.t - test the region endpoint
 
 =head1 SYNOPSIS
 
