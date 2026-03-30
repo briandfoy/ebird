@@ -1,6 +1,7 @@
 load.t
 pod_coverage.t
 pod.t
+config.t
 expand_path_template.t
 util.t
 latlong.t
