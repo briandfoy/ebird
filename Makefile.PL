@@ -104,6 +104,7 @@ my %WriteMakefile = (
 		'Storable'                                     => '0',
 		'Text::CSV_XS'                                 => '0',
 		'Time::Moment'                                 => '0',
+		'TOML'                                         => '0',
 		'parent'                                       => '0',
 		},
 
