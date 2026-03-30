@@ -21,8 +21,6 @@ subtest sanity => sub {
 
 done_testing();
 
-=back
-
 =head1 TO DO
 
 =head1 SEE ALSO
