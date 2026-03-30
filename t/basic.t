@@ -26,7 +26,7 @@ Run just this test:
 
 =cut
 
-my @sub_methods = qw( geo hotspot obs region );
+my @sub_methods = qw( geo hotspot observation product region taxonomy );
 
 subtest sanity => sub {
 	use_ok $class;
@@ -81,5 +81,3 @@ The eBird API and its data have their own terms of use:
 https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 =cut
-
-__PACKAGE__;
