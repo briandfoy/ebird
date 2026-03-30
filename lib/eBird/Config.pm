@@ -84,15 +84,15 @@ sub new ( $class, $file = undef ) {
 		}
 
 	foreach my $key ( keys $defaults->%* ) {
+		$data->{$key} = {} unless exists $data->{$key};
 		$data->{$key} = { $defaults->{$key}->%*, $data->{$key}->%* }
 		}
 
 	$data->{'api'}{'api_key'} = String::Redactable->new( $data->{'api'}{'api_key'} )
-		if eval { exists $data->{'api'}{'api_key'} };
+		if( eval { defined $data->{'api'}{'api_key'} } and length $data->{'api'}{'api_key'} );
 
 	$data->{'website'}{'password'} = String::Redactable->new( $data->{'website'}{'password'} )
-		if eval { exists $data->{'website'}{'password'} };
-
+		if( eval { defined $data->{'website'}{'password'} } and length $data->{'website'}{'password'} );
 
 	bless {
 		path => $file,
