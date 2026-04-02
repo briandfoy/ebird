@@ -131,6 +131,12 @@ sub new ($class, %args) {
 		locale
 		logger
 		);
+	$args{'logger'} //= do {
+		my $dir = $class->default_dir;
+		my $path = $dir->child('ebird.log');
+		Mojo::Log->new( path => $path, level => ($ENV{'EBIRD_LOG_LEVEL'} // 'warn') );
+		},
+
 
 	my $self = bless {
 		%defaults,
