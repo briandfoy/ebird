@@ -18,6 +18,13 @@ eBird::Cache - handle the cache
 
 =head1 SYNOPSIS
 
+	my $cache = eBird::Cache->new(
+		config =>
+		io     =>
+	    logger =>
+		);
+
+
 =head1 DESCRIPTION
 
 =head2 Class methods
@@ -32,6 +39,13 @@ eBird::Cache - handle the cache
 =cut
 
 sub new ( $class, %args ) {
+	state %defaults = (
+		config => eBird::Config->new,
+		io     => eBird::IO->new,
+		logger => Mojo::Log->new,
+
+		);
+
 	my %hash;
 
 	$hash{'dir'} = Mojo::File->new(
