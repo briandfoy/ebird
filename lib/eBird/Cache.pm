@@ -18,6 +18,9 @@ eBird::Cache - handle the cache
 
 =head1 SYNOPSIS
 
+Most of this is handled for you in the L<eBird> module when you construct a
+new object.
+
 	my $cache = eBird::Cache->new(
 		config =>
 		io     =>
