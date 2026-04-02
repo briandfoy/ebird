@@ -6,8 +6,8 @@ use experimental qw(signatures);
 
 use eBird;
 
-use Mojo::Log;
-use Mojo::File;
+use namespace::autoclean;
+use Carp qw(shortmess);
 
 our $VERSION = '0.001_01';
 

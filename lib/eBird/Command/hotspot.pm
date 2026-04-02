@@ -5,6 +5,7 @@ no feature qw(module_true);
 package eBird::Command::hotspot;
 use parent qw(eBird::Command);
 
+use namespace::autoclean;
 use eBird::Util qw(:all);
 
 use Mojo::Util qw(dumper);

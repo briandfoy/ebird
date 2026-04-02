@@ -5,6 +5,9 @@ no feature qw(module_true);
 package eBird::Command::checklist;
 use parent qw(eBird::Command);
 
+use namespace::autoclean;
+use Mojo::Util qw(dumper);
+
 use eBird::Util qw(:all);
 
 use Mojo::Util qw(dumper);

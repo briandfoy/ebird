@@ -5,6 +5,8 @@ no feature qw(module_true);
 package eBird::Command::version;
 use parent qw(eBird::Command);
 
+use namespace::autoclean;
+
 =encoding utf8
 
 =head1 NAME

@@ -5,6 +5,7 @@ no feature qw(module_true);
 package eBird::Command::track;
 use parent qw(eBird::Command);
 
+use namespace::autoclean;
 use eBird::Util qw(:all);
 
 =encoding utf8
