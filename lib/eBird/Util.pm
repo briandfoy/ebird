@@ -3,10 +3,16 @@ use utf8;
 no feature qw(module_true);
 
 package eBird::Util;
-use B;
+use namespace::clean;
+
 use Exporter qw(import);
+
+no namespace::clean;
+use B;
+use Carp qw(shortmess);
 use File::Spec::Functions qw(catfile);
 use Ref::Util qw(:all);
+use namespace::clean;
 
 our @EXPORT_OK;
 our %EXPORT_TAGS;
@@ -126,6 +132,24 @@ sub has_sqlite :Export () {
 	eval { require DBI; require DBD::SQLite };
 	}
 
+=item * last_namespace_portion( NAMESPACE )
+
+Returns the last portion of the namespace, lowercased. This is used in various
+places where the namespace directly represents a string that is defined by the
+eBird API.
+
+=cut
+
+sub last_namespace_portion :Export ($namespace) {
+	my $n = do {
+		   if( is_blessed_ref $namespace ) { blessed($namespace) }
+		elsif( is_ref $namespace         ) { ref($namespace)     }
+        else                               { $namespace          }
+		};
+
+	lc( $n =~ s/.*:://r );
+	}
+
 =item * latitude_in_range( LATITUDE )
 
 Returns true if the value of LATITUDE is between -90. and 90 inclusively.
@@ -147,24 +171,6 @@ sub longitude_in_range :Export ($longitude) {
 
 	}
 
-=item * last_namespace_portion( NAMESPACE )
-
-Returns the last portion of the namespace, lowercased. This is used in various
-places where the namespace directly represents a string that is defined by the
-eBird API.
-
-=cut
-
-sub last_namespace_portion :Export ($namespace) {
-	my $n = do {
-		   if( is_blessed_ref $namespace ) { blessed($namespace) }
-		elsif( is_ref $namespace         ) { ref($namespace)     }
-        else                               { $namespace          }
-		};
-
-	lc( $n =~ s/.*:://r );
-	}
-
 =item * load_module( MODULE, [EBIRD::IO])
 
 Loads C<NAMESPACE>, and carps if there is a problem. Use this to dynamically
@@ -172,11 +178,11 @@ load modules that you might need only sometimes.
 
 =cut
 
-sub load_module ($namespace, $io = eBird::IO->new_quiet ) {
+sub load_module ($namespace, $ebird = eBird->new ) {
 	my $file = catfile( split /::/, $namespace ) . '.pm';
 	my $rc = eval { require $file };
 	if( $@ ) {
-		$io->carp( "Could not load <$namespace>: $@" );
+		$ebird->io->error( shortmess("Could not load <$namespace>: $@") );
 		return;
 		}
 	return $rc;
