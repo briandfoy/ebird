@@ -336,6 +336,12 @@ Returns the web user-agent.
 
 sub ua ($self) { $self->{'ua'} }
 
+=item * ua_cookies_file
+
+The file in which to store the Mojo cookies.
+
+=cut
+
 sub ua_cookies_file ( $self ) {
 	$self->default_dir->child('cookies.txt');
 	}
