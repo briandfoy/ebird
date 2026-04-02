@@ -57,7 +57,7 @@ C<~/.ebird-perl/cache>
 
 sub _make_dir ( $self ) {
 	if( -e $self->dir and ! -d $self->dir ) {
-		carp "Cache dir <%s> exists but is not a directory";
+		$self->io->error( shortmess("Cache dir <%s> exists but is not a directory") );
 		return;
 		}
 	elsif( -e $self->dir ) {
