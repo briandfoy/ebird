@@ -57,7 +57,7 @@ sub description ( $self ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $data = $self->api->taxonomy;
+	my $data = $self->ebird->taxonomy->taxa;
 
 	my %results;
 	my $longest = -1;

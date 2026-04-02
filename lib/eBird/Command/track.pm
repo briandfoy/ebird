@@ -57,11 +57,11 @@ sub fallthrough_action { 'fallthrough' }
 =cut
 
 sub action_fallthrough ( $self, @args ) {
-	$self->cli->logger->trace("In fallthough for track");
-	$self->cli->io->output( "track " . $self->cli->version );
+	$self->cli->ebird->logger->trace("In fallthough for track");
+	$self->cli->ebird->io->output( "track " . $self->cli->version );
 
 	unless( looks_like_checklist_id($args[0]) ) {
-		$self->cli->io->error( "<$args[0]> does not look like a checklist" );
+		$self->cli->ebird->io->error( "<$args[0]> does not look like a checklist" );
 		return;
 		}
 

@@ -94,7 +94,7 @@ sub action_clear ( $self, @args ) {
 	if( @args ) {
 		$pattern = eval { qr/$args[0]/ };
 		unless( defined $pattern ) {
-			$self->cli->io->error( "Invalid pattern <$args[0]>" );
+			$self->cli->ebird->io->error( "Invalid pattern <$args[0]>" );
 			$self->cli->exit_usage;
 			}
 		}
@@ -103,9 +103,9 @@ sub action_clear ( $self, @args ) {
 
 	foreach my $item ( $cache_list->@* ) {
 		next unless $item->[0] =~ $pattern;
-		my $rc = $self->cli->cache->remove( $item->[0] );
+		my $rc = $self->cli->ebird->cache->remove( $item->[0] );
 		$prefix = 'Could not remove ' if( $rc == 1 and ! $dry_run );
-		$self->cli->io->output( "$prefix $item->[0]" );
+		$self->cli->ebird->io->output( "$prefix $item->[0]" );
 		}
 	}
 
@@ -116,10 +116,10 @@ Delete the named cache items.
 =cut
 
 sub action_delete ($self, @args) {
-	my $cache = $self->cli->cache;
+	my $cache = $self->cli->ebird->cache;
 
-	$self->cli->io->output( <<~"HERE" );
-		# Cache directory: @{[$self->cli->cache->dir]}
+	$self->cli->ebird->io->output( <<~"HERE" );
+		# Cache directory: @{[$self->cli->ebird->cache->dir]}
 		# EBIRD_CACHE_DIR: @{[$ENV{EBIRD_CACHE_DIR} // '<not set>']}
 		# --------------------------------------------
 		HERE
@@ -157,15 +157,15 @@ sub action_list ( $self, @args ) {
 
 	$self->info_header;
 
-	if( 0 == $self->cli->cache->list->@* ) {
-		$self->cli->io->output( "\n<no items>" );
+	if( 0 == $self->cli->ebird->cache->list->@* ) {
+		$self->cli->ebird->io->output( "\n<no items>" );
 		return;
 		}
 
-	foreach my $item ( $self->cli->cache->list->@* ) {
+	foreach my $item ( $self->cli->ebird->cache->list->@* ) {
 		next unless $item->[0] =~ $pattern;
 		my $date = localtime( $item->[1] );
-		$self->cli->io->output( sprintf $format, $date, $item->[0] );
+		$self->cli->ebird->io->output( sprintf $format, $date, $item->[0] );
 		}
 	}
 
@@ -176,16 +176,16 @@ sub action_list ( $self, @args ) {
 sub action_open ( $self, @args ) {
 	my( $file ) = @args;
 
-	my $path = $self->cli->cache->path( $file );
+	my $path = $self->cli->ebird->cache->path( $file );
 	unless( -e $path ) {
-		$self->cli->logger->error( "There is no <$file> in the cache" );
+		$self->cli->ebird->logger->error( "There is no <$file> in the cache" );
 		return;
 		}
 
 	if( length $ENV{EDITOR} ) {
 		my $rc = system $ENV{EDITOR}, $path;
 		if( $rc == -1 ) {
-			$self->cli->logger->error( "Could not open file with <$ENV{EDITOR}>" );
+			$self->cli->ebird->logger->error( "Could not open file with <$ENV{EDITOR}>" );
 			return;
 			}
 		return $rc;
@@ -200,7 +200,7 @@ sub action_open ( $self, @args ) {
 		push @command, "$path";
 		my $rc = system { $command[0] } @command;
 		if( $rc == -1 ) {
-			$self->cli->logger->error( "Could not open <$path> with <$command[0]>" );
+			$self->cli->ebird->logger->error( "Could not open <$path> with <$command[0]>" );
 			return;
 			}
 
@@ -214,8 +214,8 @@ sub action_open ( $self, @args ) {
 =cut
 
 sub action_show ( $self, @args ) {
-	$self->cli->io->output(
-		$self->cli->cache->load( $args[0] )
+	$self->cli->ebird->io->output(
+		$self->cli->ebird->cache->load( $args[0] )
 		);
 	}
 
@@ -227,8 +227,8 @@ the value from the environment.
 =cut
 
 sub info_header ( $self, @args ) {
-	$self->cli->io->output( <<~"HERE" );
-		# Cache directory: @{[$self->cli->cache->dir]}
+	$self->cli->ebird->io->output( <<~"HERE" );
+		# Cache directory: @{[$self->cli->ebird->cache->dir]}
 		# EBIRD_CACHE_DIR: @{[$ENV{EBIRD_CACHE_DIR} // '<not set>']}
 		# --------------------------------------------
 		HERE

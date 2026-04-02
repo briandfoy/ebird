@@ -69,7 +69,7 @@ sub action_fallthrough ( $self, @args ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $data = $self->api->taxonomy;
+	my $data = $self->api->taxonomy->taxa;
 
 	my %hash;
 	foreach my $item ( $data->@* ) {
@@ -86,15 +86,15 @@ sub action_list ( $self, @args ) {
 		}
 
 	foreach my $order ( sort keys %hash ) {
-		$self->cli->io->output( "$order\n" );
+		$self->cli->ebird->io->output( "$order\n" );
 		foreach my $family ( sort keys $hash{$order}->%* ) {
-			$self->cli->io->output( "\t$family\n" );
+			$self->cli->ebird->io->output( "\t$family\n" );
 			foreach my $genus ( sort keys $hash{$order}{$family}->%* ) {
-				$self->cli->io->output( "\t\t$genus\n" );
+				$self->cli->ebird->io->output( "\t\t$genus\n" );
 				foreach my $species ( sort keys $hash{$order}{$family}{$genus}->%* ) {
 					next unless defined $species;
-					$self->cli->io->output( "\t\t\t$species\n" );
-					$self->cli->io->output( "\t\t\t\t$hash{$order}{$family}{$genus}{$species}\n" ) if defined $hash{$order}{$family}{$genus}{$species};
+					$self->cli->ebird->io->output( "\t\t\t$species\n" );
+					$self->cli->ebird->io->output( "\t\t\t\t$hash{$order}{$family}{$genus}{$species}\n" ) if defined $hash{$order}{$family}{$genus}{$species};
 					}
 				}
 			}

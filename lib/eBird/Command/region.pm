@@ -60,13 +60,13 @@ sub fallthrough_action ( $self ) { 'fallthrough' }
 
 sub action_adjacent ( $self, @args ) {
 	unless( looks_like_region($args[0]) ) {
-		$self->cli->error( "$args[0] does not look like a region" );
+		$self->cli->ebird->logger->error( "$args[0] does not look like a region" );
 		return;
 		}
 
-	my $data = $self->cli->api->adjacent_regions( split /-/, $args[0] );
+	my $data = $self->cli->ebird->region->adjacent_regions( split /-/, $args[0] );
 
-	$self->cli->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_fallthrough( ARGS )
@@ -98,13 +98,13 @@ sub action_info ( $self, @args ) {
 
 sub action_list ( $self, @args ) {
 	if( @args and ! looks_like_region($args[0]) ) {
-		$self->cli->io->error( "$args[0] does not look like a region" );
+		$self->cli->ebird->io->error( "$args[0] does not look like a region" );
 		return;
 		}
 
-	my $data = $self->cli->api->subregion_data( @args );
+	my $data = $self->cli->ebird->region->subregion_data( @args );
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =back

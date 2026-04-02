@@ -28,13 +28,13 @@ use Mojo::Util qw(dumper);
 
 # hotspot info L299148
 sub action_info ( $self, @args ) {
-	my $data = $self->cli->api->hotspot_info( $args[0] );
+	my $data = $self->cli->ebird->hotspot->info( $args[0] );
 	unless( keys $data->%* ) {
-		$self->cli->io->error( "There is no information for hotspot <$args[0]>" );
+		$self->cli->ebird->io->error( "There is no information for hotspot <$args[0]>" );
 		return;
 		}
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_list
@@ -45,11 +45,11 @@ sub action_info ( $self, @args ) {
 # hotspot list US-NY
 # hotspot list US-NY-001
 sub action_list ( $self, @args ) {
-	my $data = $self->cli->api->hotspots_in_region( $args[0] );
+	my $data = $self->cli->ebird->region->hotspots_in_region( $args[0] );
 
 	my %hash = map { $_->id, $_->name } $data->@*;
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_near
@@ -64,7 +64,7 @@ sub action_near ( $self, @args ) {
 	my %args;
 	if( matches_hotspot_id($args[0]) ) {
 		my $id = shift @args;
-		my $data = $self->cli->api->hotspot_info( $id );
+		my $data = $self->cli->ebird->hotspot->info( $id );
 		unless( keys $data->%* ) {
 			$self->cli->io->error( "There is no information for hotspot <$id>" );
 			return;
@@ -77,14 +77,14 @@ sub action_near ( $self, @args ) {
 		$args{'--distance'} //= 25;
 		}
 
-	$self->cli->logger->debug( "Args: " . dumper(\%args) );
+	$self->cli->ebird->logger->debug( "Args: " . dumper(\%args) );
 
 	my @errors;
 	push @errors, "--latitude is missing" unless exists $args{'--latitude'};
 	push @errors, "--longitude is missing" unless exists $args{'--longitude'};
 
 	if( @errors ) {
-		$self->cli->io->error( join "\n", @errors );
+		$self->cli->ebird->io->error( join "\n", @errors );
 		return;
 		}
 
@@ -96,13 +96,13 @@ sub action_near ( $self, @args ) {
 		if( exists $args{'--distance'} and ! (0 <= $args{'--distance'} <= 500) );
 
 	if( @errors ) {
-		$self->cli->io->error( join "\n", @errors );
+		$self->cli->ebird->io->error( join "\n", @errors );
 		return;
 		}
 
 
 
-	my $data = $self->cli->api->nearby_hotspots(
+	my $data = $self->cli->ebird->hotspot->nearby(
 		$args{'--latitude'} ,
 		$args{'--longitude'},
 		$args{'--distance'},
@@ -110,7 +110,7 @@ sub action_near ( $self, @args ) {
 
 	my %hash = map { $_->id, $_->name } $data->@*;
 
-	$self->cli->io->output( dumper(\%hash) );
+	$self->cli->ebird->io->output( dumper(\%hash) );
 	}
 
 =back

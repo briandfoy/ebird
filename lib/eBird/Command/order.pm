@@ -53,7 +53,7 @@ sub description ( $self ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $data = $self->api->taxonomy;
+	my $data = $self->taxonomy->taxa;
 
 	my %results;
 	my $longest = -1;
@@ -62,7 +62,7 @@ sub action_list ( $self, @args ) {
 		}
 
 	foreach my $key ( sort keys %results ) {
-		$self->cli->io->output( $key . "\n" );
+		$self->cli->ebird->io->output( $key . "\n" );
 		}
 	}
 

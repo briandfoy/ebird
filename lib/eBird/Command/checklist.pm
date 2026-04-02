@@ -10,7 +10,6 @@ use Mojo::Util qw(dumper);
 
 use eBird::Util qw(:all);
 
-use Mojo::Util qw(dumper);
 
 =encoding utf8
 
@@ -72,7 +71,7 @@ sub action_list ( $self, @args ) {
 			$item->{datetime}->strftime('%Y-%m-%d'),
 			$item->{location};
 
-		$self->cli->io->output($s);
+		$self->cli->ebird->io->output($s);
 		}
 	}
 
@@ -88,7 +87,7 @@ sub action_recent ( $self, @args ) {
 		}
 	my $data = $self->cli->api->recent_checklists( split /-/, $args[0] );
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_top100
@@ -105,7 +104,7 @@ sub action_recent ( $self, @args ) {
 sub action_top100 ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_top
@@ -121,7 +120,7 @@ sub action_top100 ( $self, @args ) {
 sub action_top ( $self, @args ) {
 	my $data = $self->cli->api->subregion_data( $args[0] );
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_track
@@ -136,7 +135,7 @@ sub action_track ( $self, @args ) {
 
 	my $data = $self->cli->website->get_track( $args[0] );
 
-	$self->cli->io->output( $data );
+	$self->cli->ebird->io->output( $data );
 	}
 
 =item * action_view
@@ -163,11 +162,11 @@ sub action_track ( $self, @args ) {
 
 sub action_view ( $self, @args ) {
 	unless( looks_like_checklist_id($args[0]) ) {
-		$self->cli->io->error( "$args[0] does not look like a checklist ID" );
+		$self->cli->ebird->io->error( "$args[0] does not look like a checklist ID" );
 		return;
 		}
 
-	my $checklist = $self->cli->api->view_checklist( $args[0] );
+	my $checklist = $self->cli->ebird->product->checklist( $args[0] );
 
 	my $s = <<~"HERE";
 	Birder:  @{[ $checklist->birder ]}
@@ -179,7 +178,7 @@ sub action_view ( $self, @args ) {
 		map { sprintf "%3d %s", $_->count, $self->api->species_code_to_common_name($_->species_code) }
 		$checklist->observations->@*;
 
-	$self->cli->io->output( $s );
+	$self->cli->ebird->io->output( $s );
 	}
 
 =back

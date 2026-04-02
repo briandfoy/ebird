@@ -56,10 +56,10 @@ sub description ( $self ) {
 =cut
 
 sub action_delete ( $self, @args ) {
-	$self->cli->io->output( 'Deleting database' );
+	$self->cli->ebird->io->output( 'Deleting database' );
 	my $ebird_db = eBird::SQLite->new( 'ebird.db', $self->ebird );
 	my $path = $ebird_db->path;
-	$self->cli->io->output( "Path is $path" );
+	$self->cli->ebird->io->output( "Path is $path" );
 	unlink $path;
 	}
 
@@ -75,15 +75,15 @@ sub action_fallthrough ( $self, @args ) { 'init' }
 
 sub action_init ( $self, @args ) {
 	unless( eBird::Util::has_sqlite() ) {
-		$self->cli->io->optional_feature_needs('SQLite');
+		$self->cli->ebird->io->optional_feature_needs('SQLite');
 		return;
 		}
 
-	$self->cli->io->output( 'Init database' );
+	$self->cli->ebird->io->output( 'Init database' );
 	my $ebird_db = eBird::SQLite->new( 'ebird.db', $self->ebird );
 	$ebird_db->init;
 
-	$self->cli->io->output( 'Database initialized' );
+	$self->cli->ebird->io->output( 'Database initialized' );
 	}
 
 =back

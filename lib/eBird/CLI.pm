@@ -31,11 +31,7 @@ Create the object that coordinates the command line interface.
 
 Keys:
 
-    - api_key   - the eBird API key
 	- ebird     - the object that handles the API bits (eBird)
-	- io        - the object that handles IO (eBird::IO)
-	- logger    - a Mojo::Log compatible logging object
-	- log_level - the level of messages to output
 	- name      - the program name to declare
 	- version   - the version to declare
 
@@ -43,35 +39,15 @@ Keys:
 
 sub new ($class, %arguments) {
 	state %defaults = (
-		name => 'ebird',
+		name    => 'ebird',
+		version => $VERSION,
+		ebird   => eBird->new,
 		);
-	state %required = map { $_, 1 } qw(api_key);
 
 	my %options = ( %defaults, %arguments );
-
-	my $self = bless {}, $class;
-	$self->{'logger'} = $options{'logger'} // Mojo::Log->new( level => $options{'log_level'} );
-
-	$self->{io} = $options{io} // eBird::IO->new;
-
-	my @missing = grep { ! exists $options{$_} } keys %required;
-	if( @missing ) {
-		$self->logger->error( 'Missing keys <@missing>' );
-		return;
-		}
-
-	$self->{'options'} = \%options;
-	$self->{'cache'}   = $options{cache};
-	$self->{'ebird'}   = eBird->new(
-		api_key => $options{api_key},
-		cache   => $self->cache,
-		logger  => $self->logger,
-		);
-	$self->{'name'}    = $options{name};
-	$self->{'version'} = $options{version} // $class->VERSION;
+	my $self = bless \%options, $class;
 
 	$self->load_commands;
-
 	return $self;
 	}
 
@@ -89,7 +65,10 @@ sub DESTROY ($self) {
 
 =cut
 
-sub cache ($self) { $self->{'cache'} }
+sub cache ($self) {
+	$self->ebird->io->error( shortmess "deprecated use of <cache> instead of <ebird->cache>" );
+	$self->ebird->cache
+	}
 
 =item * io
 
@@ -98,7 +77,10 @@ L<eBird::IO> object.
 
 =cut
 
-sub io ($self) { $self->{'io'} }
+sub io ($self) {
+	$self->ebird->io->error( shortmess "deprecated use of <io> instead of <ebird->io>" );
+	$self->ebird->io
+	}
 
 =item * ebird
 
@@ -143,7 +125,10 @@ L<Mojo::Log>.
 
 =cut
 
-sub logger ($self) { $self->{'logger'} }
+sub logger ($self) {
+	$self->ebird->io->error( shortmess "deprecated use of <logger> instead of <ebird->logger>" );
+	$self->ebird->logger;
+	}
 
 =item * name
 
@@ -165,7 +150,7 @@ sub load_commands ($self) {
 	state @namespace_dirs = split /::/, $base_namespace;
 
 	foreach my $dir ( @INC ) {
-		$self->logger->trace( "looking in dir <$dir> for command module" );
+		$self->ebird->logger->trace( "looking in dir <$dir> for command module" );
 		my $sub_dir = Mojo::File->new($dir)->child( @namespace_dirs );
 		next unless -d $sub_dir;
 		opendir my($dh), $sub_dir;
@@ -191,18 +176,18 @@ sub load_file ($self, $file) {
 	return $loaded->{$file} if exists $loaded->{$file};
 
 	$loaded->{$file} = 0;
-	$self->logger->trace( "Trying to load module <$file>" );
+	$self->ebird->logger->trace( "Trying to load module <$file>" );
 	my $class;
 	eval "\$class = require q($file)";
 
 	if( $@ ) {
-		$self->logger->error( "Tried to load file <$file> but failed: $@" );
+		$self->ebird->logger->error( "Tried to load file <$file> but failed: $@" );
 		return;
 		}
 
 	$loaded->{$file} = 1;
 
-	$self->logger->trace( "Module name is <$class>" );
+	$self->ebird->logger->trace( "Module name is <$class>" );
 	my $rc = $self->register( $class );
 	return 1;
 	}
@@ -226,14 +211,14 @@ Register a class that contains commands.
 $|++;
 sub register ($self, $class) {
 	unless( $class->can('register') ) {
-		$self->logger->error( "Tried to register <$class> but it does not have a register method" );
+		$self->ebird->logger->error( "Tried to register <$class> but it does not have a register method" );
 		return;
 		}
 
 	my $handler = $class->register( $self );
 	my $name = $handler->name;
 	if( exists $self->{'commands'}{$name} ) {
-		$self->logger->error( "A command with name <$name> already exists." );
+		$self->ebird->logger->error( "A command with name <$name> already exists." );
 		return;
 		}
 
@@ -260,24 +245,6 @@ Returns the version of the command.
 
 sub version ($self) {
 	$self->{'version'};
-	}
-
-=item * website
-
-This lazily initializes the parts to login to the website and fetch
-data.
-
-=cut
-
-sub website ($self) {
-	state $rc = require eBird::Website;
-	state $website = eBird::Website->new(
-		logger => $self->logger,
-		io     => $self->io,
-		cache  => $self->cache,
-		);
-
-	$website;
 	}
 
 =back

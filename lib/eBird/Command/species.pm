@@ -59,7 +59,7 @@ sub fallthrough_action { 'show' }
 =cut
 
 sub action_list ( $self, @args ) {
-	my $data = $self->api->taxonomy;
+	my $data = $self->ebird->taxonomy->taxa;
 
 	my %results;
 	foreach my $item ( $data->@* ) {
@@ -68,7 +68,7 @@ sub action_list ( $self, @args ) {
 		}
 
 	foreach my $key ( sort keys %results ) {
-		$self->cli->io->output( sprintf "%s\n", $key );
+		$self->cli->ebird->io->output( sprintf "%s\n", $key );
 		}
 	}
 

@@ -142,24 +142,21 @@ sub name ($self) {
 
 sub run ( $self, @args ) {
 	my $group = ref($self);
-	$self->cli->logger->debug("In run for $group with args with <@args>");
-	$self->cli->logger->debug("run: args are <@args>");
-
-	$self->cli->logger->debug("run: has fallthrough => " . $self->has_fallthrough_action);
+	$self->cli->ebird->logger->debug("In run for $group with args with <@args>");
 
 	if( @args == 0 and  $self->has_default_action ) {
 		unshift @args, $self->default_action
 		}
 	elsif( @args > 0 and $self->has_action($args[0]) ) { () }
 	elsif( $self->has_fallthrough_action ) {
-		$self->cli->logger->debug("run: Selecting fallthrough");
+		$self->cli->ebird->logger->debug("run: Selecting fallthrough");
 		unshift @args, $self->fallthrough_action;
 		}
 	else {
-		$self->cli->logger->debug("run: did not find an action");
+		$self->cli->ebird->logger->debug("run: did not find an action");
 		}
 
-	$self->cli->logger->debug("run: args are <@args>");
+	$self->cli->ebird->logger->debug("run: args after processing are <@args>");
 	my $action = $self->action_to_sub( shift @args );
 	$self->$action( @args );
 

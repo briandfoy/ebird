@@ -59,9 +59,9 @@ sub fallthrough_action { 'show' }
 =cut
 
 sub action_show ( $self ) {
-	$self->cli->io->output( sprintf "%s %s\n", map {$self->cli->$_()} qw(name version) );
+	$self->cli->ebird->io->output( sprintf "%s %s\n", map {$self->cli->$_()} qw(name version) );
 
-	$self->cli->io->output( "Commands:\n" );
+	$self->cli->ebird->io->output( "Commands:\n" );
 
 	my @handlers = sort { $a->name cmp $b->name } $self->cli->handlers;
 	my $max_length = max( map { length $_->name } @handlers );
@@ -73,7 +73,7 @@ sub action_show ( $self ) {
 
 		$string =~ s/^(?!\R)/\t/gm;
 
-		$self->cli->io->output( "$string" );
+		$self->cli->ebird->io->output( "$string" );
 		}
 	}
 

@@ -71,7 +71,7 @@ sub action_list ( $self, @args ) {
 	foreach my $locale ( $data->@* ) {
 		next unless $locale->code =~ m/$pattern/;
 		my $string = sprintf '%-6s  -  %s', $locale->code, $locale->name;
-		$self->cli->io->output( "$string" );
+		$self->cli->ebird->io->output( "$string" );
 		}
 	}
 

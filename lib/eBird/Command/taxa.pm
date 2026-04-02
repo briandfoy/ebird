@@ -57,9 +57,9 @@ sub description ( $self ) {
 =cut
 
 sub action_list ( $self ) {
-	my $data = $self->cli->api->taxonomy;
+	my $data = $self->cli->ebird->taxonomy->taxa;
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_locales
@@ -67,7 +67,7 @@ sub action_list ( $self ) {
 =cut
 
 sub action_locales ( $self, @args ) {
-	my $data = $self->cli->api->taxa_locales;
+	my $data = $self->cli->ebird->taxonomy->locales;
 
 	$self->cli->io->output( dumper($data) );
 	}
@@ -80,9 +80,9 @@ sub action_groups ( $self, %args ) {
 	$args{locale}   //= 'en';
 	$args{grouping} //= 'ebird';
 
-	my $data = $self->cli->api->taxa_groups(%args);
+	my $data = $self->cli->ebird->taxonomy->groups(%args);
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =item * action_versions
@@ -90,9 +90,9 @@ sub action_groups ( $self, %args ) {
 =cut
 
 sub action_versions ( $self, @args ) {
-	my $data = $self->cli->api->taxa_versions;
+	my $data = $self->cli->ebird->versions;
 
-	$self->cli->io->output( dumper($data) );
+	$self->cli->ebird->io->output( dumper($data) );
 	}
 
 =back

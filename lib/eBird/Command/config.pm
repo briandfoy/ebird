@@ -7,8 +7,7 @@ use parent qw(eBird::Command);
 
 use namespace::autoclean;
 use Mojo::Util qw(dumper);
-
-use eBird::Config;
+use Scalar::Util qw(blessed);
 
 =encoding utf8
 
@@ -55,13 +54,12 @@ sub description ( $self ) {
 =cut
 
 sub action_show ( $self, @args ) {
-	my $config = $self->ebird->config;
-
 	no warnings;
-
 	my $c = $self->cli->ebird->config;
 
 	my $e = <<~"HERE";
+		Implementor: @{[ blessed $c ]}
+
 		Environment:
 			EBIRD_API_KEY:    $ENV{'EBIRD_API_KEY'}
 			EBIRD_CACHE_DIR:  $ENV{'EBIRD_CACHE_DIR'}
@@ -82,7 +80,7 @@ sub action_show ( $self, @args ) {
 				password: @{[ $c->website->password ]}
 		HERE
 
-	$self->cli->io->output($e);
+	$self->cli->ebird->io->output($e);
 	}
 
 =back
