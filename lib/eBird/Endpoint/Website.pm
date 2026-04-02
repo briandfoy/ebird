@@ -82,6 +82,7 @@ sub checklists ($self) {
 	}
 
 
+=back
 
 =head2 GPS Track tools
 
