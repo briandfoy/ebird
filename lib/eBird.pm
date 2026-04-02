@@ -121,7 +121,6 @@ sub new ($class, %args) {
 		cache        => eBird::Cache->new( dir => $class->default_cache_dir  ),
 		config       => eBird::Config->new( $class->default_config_file ),
 		io           => eBird::IO->new,
-		logger       => do { my $log = Mojo::Log->new; $log->level('warn'); $log },
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_base_url
@@ -131,12 +130,12 @@ sub new ($class, %args) {
 		locale
 		logger
 		);
+
 	$args{'logger'} //= do {
 		my $dir = $class->default_dir;
 		my $path = $dir->child('ebird.log');
 		Mojo::Log->new( path => $path, level => ($ENV{'EBIRD_LOG_LEVEL'} // 'warn') );
 		},
-
 
 	my $self = bless {
 		%defaults,
@@ -165,7 +164,7 @@ Finds each C<eBird::Endpoint> modules and calls C<add_endpoint> with it.
 sub add_endpoints ($self) {
 	state $endpoints = [
 		map { "eBird::Endpoint::$_" }
-			qw(Hotspot Geo Observation Product Region Taxonomy)
+			qw(Hotspot Geo Observation Product Region Taxonomy Website)
 		];
 
 	$self->add_endpoint($_) for $endpoints->@*;
@@ -211,18 +210,6 @@ the sensitive value.
 =cut
 
 sub api_key ( $self ) { $self->config->api->api_key }
-
-sub _setup_ua ( $self ) {
-	state $rc = require Mojo::UserAgent;
-	$self->{'ua'} = Mojo::UserAgent->new;
-
-	$self->{'ua'}->on(
-		start => sub ($ua, $tx) {
-        	$tx->req->headers->header( "X-eBirdApiToken", $self->config->api->api_key->to_str_unsafe );
-        	}
-		);
-	}
-
 
 =item * cache
 
@@ -317,18 +304,6 @@ sub get ( $self, %args ) {
 	return $data;
 	}
 
-=item * locale
-
-=cut
-
-sub locale ($self) { $self->config->general->locale };
-
-=item * logger
-
-=cut
-
-sub logger ( $self ) { $self->{logger} //= Mojo::Log->new }
-
 =item * io
 
 Returns the C<io> object to use for all output.
@@ -344,6 +319,15 @@ anything using. The default
 
 =cut
 
+sub locale ($self) { $self->config->general->locale };
+
+=item * logger
+
+=cut
+
+sub logger ( $self ) { $self->{logger} //= Mojo::Log->new }
+
+
 =item * ua
 
 Returns the web user-agent.
@@ -352,6 +336,29 @@ Returns the web user-agent.
 
 sub ua ($self) { $self->{'ua'} }
 
+sub ua_cookies_file ( $self ) {
+	$self->default_dir->child('cookies.txt');
+	}
+
+sub _setup_ua ( $self ) {
+	state $rc = require Mojo::UserAgent;
+	state $cookie_jar = do {
+		$self->logger->debug("Cookies file is " . $self->ua_cookies_file );
+		Mojo::UserAgent::CookieJar->new( file => $self->ua_cookies_file );
+		};
+	$self->{'ua'} = Mojo::UserAgent->new;
+	$self->{'ua'}->cookie_jar($cookie_jar);
+
+	$self->{'ua'} = $self->{'ua'}->max_redirects(3);
+
+	$self->{'ua'}->on(
+		start => sub ($ua, $tx) {
+			if( $tx->req->url->host eq 'api.ebird.org' ) {
+        		$tx->req->headers->header( "X-eBirdApiToken", $self->config->api->api_key->to_str_unsafe );
+        		}
+        	}
+		);
+	}
 
 =back
 
