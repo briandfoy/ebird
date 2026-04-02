@@ -80,7 +80,7 @@ sub recent_checklists ( $self, $region, $query = {} ) {
 
 =begin comment
 
-sortKey	obs_dt, creation_dt	obs_dt	Order the results by the date of the checklist or by the date it was submitted. maxResults	1 - 200	10	Only fetch this number of checklists.
+sortKey     obs_dt,creation_dt	obs_dt   Order the results by the date of the checklist or by the date it was submitted.
 
 =end comment
 
