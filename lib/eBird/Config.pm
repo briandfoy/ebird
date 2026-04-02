@@ -142,7 +142,7 @@ Returns the locale to use. The default is C<en>.
 
 =back
 
-=head3 website
+=head3 Website settings
 
 Access these through the C<website> method:
 
