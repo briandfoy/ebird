@@ -10,7 +10,9 @@ use Exporter qw(import);
 no namespace::clean;
 use B;
 use Carp qw(shortmess);
+use Cwd qw(getcwd);
 use File::Spec::Functions qw(catfile);
+use Mojo::File ();
 use Ref::Util qw(:all);
 use namespace::clean;
 
@@ -130,6 +132,28 @@ Returns true if L<DBD::SQLite> is available.
 
 sub has_sqlite :Export () {
 	eval { require DBI; require DBD::SQLite };
+	}
+
+=item * home_dir
+
+Try hard to figure out if there is a home directory where a config file
+might be. On Unix, that is probably C<HOME> or C<LOGDIR>. On Windows, it
+might be C<HOME> for unix emulation things, or it might be
+C<USERPROFILE>. Or we might have to try harder.
+
+=cut
+
+sub home_dir :Export {
+ 	my( $home ) =
+		map  { $ENV{$_} }
+		grep { defined $ENV{$_} } qw(HOME LOGDIR USERPROFILE);
+	return Mojo::File->new($home) if defined $home;
+
+	if( defined $ENV{'HOMEDRIVE'} and defined $ENV{'HOMEPATH'}) {
+		return Mojo::File->new($ENV{'HOMEDRIVE'})->chile($ENV{'HOMEPATH'});
+		}
+
+    return Mojo::File->new( Cwd::getcwd() );
 	}
 
 =item * last_namespace_portion( NAMESPACE )

@@ -85,31 +85,7 @@ home directory.
 
 =cut
 
-sub default_dir ($class) { Mojo::File->new( $class->home_dir )->child('.ebird-perl')->make_path }
-
-=item * home_dir
-
-Try hard to figure out if there is a home directory where a config file
-might be. On Unix, that is probably C<HOME> or C<LOGDIR>. On Windows, it
-might be C<HOME> for unix emulation things, or it might be
-C<USERPROFILE>. Or we might have to try harder.
-
-=cut
-
-sub home_dir {
-    my $class = shift;
-
-	my( $home ) =
-		map  { $ENV{$_} }
-		grep { defined $ENV{$_} } qw(HOME LOGDIR USERPROFILE);
-	return Mojo::File->new($home) if defined $home;
-
-	if( defined $ENV{'HOMEDRIVE'} and defined $ENV{'HOMEPATH'}) {
-		return Mojo::File->new($ENV{'HOMEDRIVE'})->chile($ENV{'HOMEPATH'});
-		}
-
-    return Mojo::File->new( Cwd::getcwd() );
-	}
+sub default_dir ($class) { Mojo::File->new( eBird::Util::home_dir() )->child('.ebird-perl')->make_path }
 
 =item * new
 
