@@ -22,9 +22,9 @@ Most of this is handled for you in the L<eBird> module when you construct a
 new object.
 
 	my $cache = eBird::Cache->new(
-		config =>
-		io     =>
-	    logger =>
+		config => eBird::Config->new,
+		io     => eBird::IO->new,
+	    logger => Mojo::Log->new,
 		);
 
 
