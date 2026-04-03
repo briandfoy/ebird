@@ -14,7 +14,7 @@ use eBird::Util qw();
 
 use Mojo::DOM;
 use Mojo::JSON qw(decode_json encode_json);
-use Mojo::Util qw(dumper);
+use Mojo::Util qw(decode dumper);
 use Time::Moment;
 
 use eBird::Util qw(:all);
@@ -44,26 +44,6 @@ list of checklists for a user.
 
 =over 4
 
-=item * check_credentials
-
-=cut
-
-sub check_credentials ($self) {
-	my @errors = ();
-	unless( $self->ebird->config->website->username ) {
-		push @errors, "No website password in the config"
-		}
-
-	unless( defined $self->ebird->config->website->password ) {
-		push @errors, "No website password in the config"
-		}
-
-	foreach my $error ( @errors ) {
-		$self->ebird->logger->error( "check_credentials: $error" );
-		}
-
-	return ! @errors;
-	}
 
 =item * checklists
 
@@ -74,7 +54,7 @@ sub checklists ($self) {
 	my $ebird = $self->ebird;
 	$ebird->io->output( 'In checklists' );
 
-	my $checklists = $self->checklists_summary;
+	my $checklists = $self->checklists_summary // [];
 
 	$self->ebird->io->output( sprintf "There are %d checklists", scalar $checklists->@* );
 
@@ -93,6 +73,7 @@ sub checklists ($self) {
 =cut
 
 sub create_gpx ($self, $hash) {
+	return;
 	$self->logger->debug( "create_gpx: starting" );
 	$self->logger->debug( "create_gpx: hash: " . dumper($hash) );
 
@@ -101,7 +82,7 @@ sub create_gpx ($self, $hash) {
 		offset => $hash->{'timezonedb'}{'gmtOffset'} / 3600,
 		);
 
-	my $interval = $hash->{'seconds'} / $hash->{'track'}->@*;
+	my $interval = eval { $hash->{'seconds'} / $hash->{'track'}->@* };
 	my $offset = 0;
 
 	my $track_segment = Mojo::DOM->new_tag('trkseg');
@@ -349,6 +330,10 @@ sub _extract_item_details ( $li ) { # This is not a methond
 
 =item * checklists_summary
 
+If we have the checklist summary in the cache, return that immediately.
+
+If not, fetch the checklist summary from the website.
+
 =cut
 
 sub checklists_summary ( $self ) {
@@ -356,11 +341,11 @@ sub checklists_summary ( $self ) {
 
 	my $checklist_summary;
 	if( $self->ebird->cache->exists($cache_key) ) {
-		$self->ebird->logger->debug("cache key <$cache_key> exists");
+		$self->ebird->logger->debug("checklists_summary: cache key <$cache_key> exists");
 		my $raw_data = $self->ebird->cache->load( $cache_key );
 		$checklist_summary = eval { decode_json($raw_data) };
 		if( defined $checklist_summary ) {
-			$self->ebird->logger->debug("Returning cached data for <$cache_key>");
+			$self->ebird->logger->debug("checklists_summary: Returning cached data for <$cache_key>");
 			return $checklist_summary;
 			}
 		$self->ebird->logger->error("Could not load JSON for <$cache_key>: $@");
@@ -380,28 +365,42 @@ sub checklists_summary ( $self ) {
 		};
 
 	my @checklists;
-	my $expected_pages = 1;
-	my $page = 0;
-	my $per_page = 100;
+	my $highest;
+	my $expected_pages =   1;
+	my $page           =   0;
+	my $per_page       = 100;
 
 	while( $page <= $expected_pages ) {
 		$page++;
 
-		$self->ebird->logger->debug( "Fetching page <$page> of <$expected_pages>" );
+		$self->ebird->logger->debug( "checklists_summary: Fetching page <$page> of <$expected_pages>" );
 
 		my $html = $self->fetch_list_page( $page, $per_page );
+		unless( length $html ) {
+			$self->ebird->logger->error( "HTML for checklist page was empty" );
+			return [];
+			}
 
 		push @checklists, Mojo::DOM->new($html)->find( 'li[id^="checklist-"]' )
 			->map( \&_extract_item_details )
 			->to_array
 			->@*;
+		if( @checklists == 0 ) {
+			$self->ebird->logger->error( "Could not extract any checklists from HTML" );
+			return [];
+			}
+
+		$highest = $checklists[0]->{'sequence'};
+		unless( $highest ) {
+			$self->ebird->logger->error( "First checklist item did not have a sequence" );
+			return [];
+			}
 
 		state $n = do {
 			$per_page = @checklists;
 			$self->ebird->logger->debug( "per page is <$per_page>" );
-			my $highest = $checklists[0]->{sequence};
 			$self->ebird->logger->debug( "Highest checklist is <$highest>" );
-			$expected_pages = ceil( $highest / $per_page );
+			$expected_pages = ceil( eval{ $highest / $per_page } );
 			$self->ebird->logger->debug( "Expected pages is <$expected_pages>" );
 			};
 		}
@@ -415,9 +414,15 @@ sub checklists_summary ( $self ) {
 =cut
 
 sub fetch_list_page ( $self, $page, $per_page = 100 ) {
+	$self->ebird->logger->debug("fetch_list_page: page <$page> per page <$per_page>");
 	my $cache_key = sprintf "%s-website-checklist-page-$page", $self->ebird->config->website->username;
-	my $data = $self->ebird->cache->load( $cache_key );
-	return $data if defined $data;
+
+	if( $self->ebird->cache->exists($cache_key) ) {
+		$self->ebird->logger->debug("fetch_list_page: found in cache <$cache_key>");
+		my $html = $self->ebird->cache->load_decode( $cache_key );
+		$html = eval { decode( 'UTF-8', $html ) };
+		return $html if defined $html;
+		}
 
 	my $params = {
 		currentRow => ($per_page * ($page-1)) + 1,
@@ -426,17 +431,89 @@ sub fetch_list_page ( $self, $page, $per_page = 100 ) {
 		};
 
 	my $checklists_tx = $self->ebird->ua->get( 'https://ebird.org/mychecklists' => form => $params );
-	my $html = $checklists_tx->res->body;
-
+	my $html =  $checklists_tx->res->body;
 	$self->ebird->cache->save( $cache_key, $html );
 
+	$html = eval { decode( 'UTF-8', $html ) };
+	unless( defined $html ) {
+		$self->ebird->logger->error("Could not decode HTML: $@");
+		return;
+		}
+	$self->ebird->logger->debug( "fetch_list_page: found HTML with length " . length $html );
+
+
 	return $html;
+	}
+
+=back
+
+=head2 Logging In
+
+=over 4
+
+=item * am_logged_in
+
+Accesses the landing page and looks at the response to guess if the user-agent
+is logged in.
+
+Even if there is a session cookie, that cookie might have expired.
+
+=cut
+
+sub am_logged_in ( $self ) {
+	$self->ebird->logger->debug('am_logged_in: Checking if we are logged in');
+	my $tx = $self->ebird->ua->get($self->landing_page);
+	$self->ebird->logger->debug('am_logged_in: Response code was ' . $tx->res->code);
+
+	my $found_current_region = $tx->res->body =~ m/Current \h+ region:/xi;
+	$self->ebird->logger->debug( 'am_logged_in: ' .
+		($found_current_region ?
+			'Found the text "Current Region", so we are logged in'
+			:
+			'Did not see "Current Region", so guessing we are not logged in'
+			)
+		);
+
+	return !! $found_current_region;
+	}
+
+=item * check_credentials
+
+=cut
+
+sub check_credentials ($self) {
+	my @errors = ();
+	unless( $self->ebird->config->website->username ) {
+		push @errors, "No website password in the config"
+		}
+
+	unless( defined $self->ebird->config->website->password ) {
+		push @errors, "No website password in the config"
+		}
+
+	foreach my $error ( @errors ) {
+		$self->ebird->logger->error( "check_credentials: $error" );
+		}
+
+	return ! @errors;
+	}
+
+=item * landing_page
+
+Returns the URL of the landing page.
+
+=cut
+
+sub landing_page ($self) {
+	'https://ebird.org/home'
 	}
 
 =item * login_to_ebird
 
 Go through the website login process to get the session information that we
-need.
+need. If we are already logged in, this returns without doing anything.
+
+Call this before any operation where you need to interact with the website.
 
 =cut
 
@@ -444,6 +521,13 @@ sub login_to_ebird ( $self ) {
 	$self->ebird->logger->debug( "login_to_ebird: starting" );
 	$self->ebird->logger->debug( "login_to_ebird: username is " . $self->ebird->config->website->username );
 
+	if( $self->am_logged_in ) {
+		$self->ebird->logger->debug( "login_to_ebird: am logged in" );
+		return $self->{'logged_in'} = 1;
+		};
+	$self->ebird->logger->debug( "login_to_ebird: not logged in--continuing" );
+
+	# first, see if we are logged in. We might have
 	unless( $self->check_credentials ) {
 		$self->ebird->logger->error( "login_to_ebird: Could not get login credentials for the website. Check the config.");
 		return;
@@ -454,9 +538,8 @@ sub login_to_ebird ( $self ) {
 	$self->ebird->logger->debug( "login_to_ebird: did not find JSESSIONID, so logging in" );
 
 	# Start with the landing page
-	my $landing_page = 'https://ebird.org/home';
 	LANDING_PAGE: {
-		my $tx = $ua->get( $landing_page );
+		my $tx = $ua->get( $self->landing_page );
 
 		my $location = Mojo::URL->new( $tx->req->url )->query(Mojo::Parameters->new);
 		$self->ebird->logger->debug(  "Status: " . $tx->res->code );
@@ -489,20 +572,20 @@ sub login_to_ebird ( $self ) {
 			locale      => 'en_US',
 			username    => $self->ebird->config->website->username,
 			password    => $self->ebird->config->website->password->to_str_unsafe,
-			remember_me => 'checked',
+			remember_me => 'on',
 			execution   => $form->at( 'input[name=execution]' )->attr( 'value' ),
 			'_eventId'  => $form->at( 'input[name=_eventId]' )->attr( 'value' ),
 			submit      => 'Sign in',
 			};
-
+		$self->ebird->logger->debug( "login_to_ebird: params: " . Mojo::Util::dumper($params));
 		my $headers = {
-			'Referer' => $landing_page,
+			'Referer' => $self->landing_page,
 			};
 
 		my $action_url = 'https://secure.birds.cornell.edu/cassso/login';
 		my $post_tx = $ua->post( $action_url => $headers => form => $params );
-		$self->ebird->logger->debug( "login_to_bird: response code " . $tx->res->code );
-		$self->ebird->logger->debug( "login_to_bird: response is\n--------\n" . $tx->res->headers->to_string . "\n------\n" );
+		$self->ebird->logger->debug( "login_to_ebird: response code " . $tx->res->code );
+		$self->ebird->logger->debug( "login_to_ebird: response was " . $tx->res->to_string =~ s/\R\R+.*//sr );
 
 		unless( $post_tx->res->is_success ) {
 			$self->{'logged_in'} = 0;
@@ -510,6 +593,11 @@ sub login_to_ebird ( $self ) {
 			return;
 			}
 		}
+
+	unless( $self->am_logged_in ) {
+		$self->ebird->logger->debug( "login_to_ebird: not logged in after trying" );
+		return $self->{'logged_in'} = 0;
+		};
 
 	$self->ebird->logger->debug( "login_to_ebird: Login succeeded" );
 

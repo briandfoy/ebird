@@ -46,7 +46,6 @@ sub new ( $class, %args ) {
 		config => eBird::Config->new,
 		io     => eBird::IO->new,
 		logger => Mojo::Log->new,
-
 		);
 
 	my %hash;
@@ -54,7 +53,7 @@ sub new ( $class, %args ) {
 	$hash{'dir'} = Mojo::File->new(
 		$args{'dir'} // catfile( $ENV{HOME}, '.ebird-perl', 'cache' )
 		);
-	$hash{'logger'}    = $args{'logger'} // Mojo::Log->new( level => 'warn' );
+	$hash{'logger'}  //= Mojo::Log->new( level => 'warn' );
 
 	my $self = bless \%hash, $class;
 	}
@@ -112,7 +111,7 @@ sub list ( $self ) {
 
 =item * load( KEY )
 
-Load the file named KEY and return the UTF-8 octets.
+Load a cache item named KEY and return the raw octets.
 
 =cut
 
@@ -124,6 +123,22 @@ sub load ( $self, $key ) {
 	$self->logger->debug( "Found $key in cache" );
 
 	$file->slurp;
+	}
+
+=item * load_decode( KEY [, ENCODING] )
+
+Loads a cache item and decoded it as C<ENCODING>. If you don't specify an
+encoding, this uses C<UTF-8>.
+
+=cut
+
+sub load_decode ( $self, $key, $encoding = 'UTF-8' ) {
+	my $decoded = eval{
+		decode( $encoding, $self->load($key) )
+		};
+	return $decoded unless $@;
+	$self->logger->error( "Could not decode data for <$key> with C<$encoding>: $@" );
+	return;
 	}
 
 =item * logger()
@@ -153,16 +168,26 @@ sub remove ( $self, @keys ) {
 	$self->path($_)->remove for @keys;
 	}
 
-=item * save( KEY, DATA )
+=item * save( KEY, STRING )
 
-Save the UTF-8 octets of DATA to the the file represented by KEY.
+Save C<STRING> as raw octets.
 
 =cut
 
-sub save ( $self, $key, $data ) {
-	$self->logger->debug( "save: Saving data to $key. Bytes " . length $data );
+sub save ( $self, $key, $string ) {
+	$self->logger->debug( "save: Saving data to $key. Bytes " . length $string );
 	$self->_make_dir;
-	$self->path($key)->spurt( $data );
+	$self->path($key)->spurt( $string );
+	}
+
+=item * save_encode( KEY, STRING [, ENCODING] )
+
+Encode C<STRING> as C<ENCODING> (or UTF-8 by default) and save it.
+
+=cut
+
+sub save_encode ( $self, $key, $string, $encoding = 'UTF-8' ) {
+	$self->save( $key, encode $encoding, $string );
 	}
 
 =back

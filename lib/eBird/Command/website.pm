@@ -81,14 +81,20 @@ sub action_checklists ( $self ) {
 	$self->cli->ebird->logger->trace("In run for website");
 
 	my $checklists = $self->cli->ebird->website->checklists_summary;
+	if( ! defined $checklists or $checklists->@* == 0 ) {
+		$self->ebird->io->output( "Could not extract checklists" );
+		return;
+		}
 
 	my $places = ceil(log($checklists->@*) / log(10));
-
+	$self->ebird->io->output( 'There are checklists' );
 	my $template = '%*d   %10s   %s';
 	foreach my $c ( sort { $a->{'sequence'} <=> $b->{'sequece'} } $checklists->@* ) {
 		my $ymd = $c->{'datetime'} =~ s/T.*//r;
 		$self->ebird->io->output( sprintf $template, $places, $c->{'sequence'}, $ymd, $c->{'location'} );
 		}
+
+	return 1;
 	}
 
 =back

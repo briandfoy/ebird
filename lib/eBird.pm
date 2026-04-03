@@ -325,20 +325,29 @@ sub ua_cookies_file ( $self ) {
 sub _setup_ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
 	state $cookie_jar = do {
-		$self->logger->debug("Cookies file is " . $self->ua_cookies_file );
-		Mojo::UserAgent::CookieJar->new( file => $self->ua_cookies_file );
+		#$self->logger->debug("Cookies file is " . $self->ua_cookies_file );
+		# Mojo::UserAgent::CookieJar->new( file => $self->ua_cookies_file );
+		Mojo::UserAgent::CookieJar->new;
 		};
 	$self->{'ua'} = Mojo::UserAgent->new;
 	$self->{'ua'}->cookie_jar($cookie_jar);
 
-	$self->{'ua'} = $self->{'ua'}->max_redirects(3);
+	$self->{'ua'} = $self->{'ua'}->max_redirects(5);
 
 	$self->{'ua'}->on(
 		start => sub ($ua, $tx) {
+			$self->logger->debug( "Mojo start: " . $tx->req->url );
 			if( $tx->req->url->host eq 'api.ebird.org' ) {
         		$tx->req->headers->header( "X-eBirdApiToken", $self->config->api->api_key->to_str_unsafe );
         		}
-        	}
+			$tx->on(
+				finish => sub ($tx) {
+					$self->logger->debug( "finish: " . sprintf "Mojo finish (%s) %s", $tx->res->code, $tx->req->url );
+					$self->logger->debug( "---- finish: request was --------\n" . $tx->req->to_string =~ s/\R\R+.*//sr . "\n-----------\n");
+					$self->logger->debug( "---- finish: response was --------\n" . $tx->res->to_string =~ s/\R\R+.*//sr . "\n-----------\n");
+					}
+				) if 0;
+			}
 		);
 	}
 
