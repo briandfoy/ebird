@@ -38,7 +38,7 @@ Returns the description of the command
 
 =cut
 
-sub description { 'show the instructions' }
+sub description { 'show the list of available commands' }
 
 =item * fallthrough_action
 
@@ -54,12 +54,18 @@ sub fallthrough_action { 'show' }
 
 =over 4
 
+=item * action_help
+
 =item * action_show
+
+Shows the list of commands
 
 =cut
 
-sub action_show ( $self ) {
-	$self->cli->ebird->io->output( sprintf "%s %s\n", map {$self->cli->$_()} qw(name version) );
+sub action_help ( $self, @args ) { $self->action_show(@args) }
+
+sub action_show ( $self, @args ) {
+	$self->cli->ebird->io->output( $self->cli->version_line . "\n" );
 
 	$self->cli->ebird->io->output( "Commands:\n" );
 
