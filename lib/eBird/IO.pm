@@ -165,15 +165,6 @@ sub error ( $self, @strings ) {
 
 sub error_fh ( $self ) { $self->{'error_fh'} }
 
-=item * history
-
-
-=cut
-
-sub history ($self) {
-	Storable::dclone $self->{'history'};
-	}
-
 =item * optional_feature_needs( MODULE )
 
 Output a message that the program needs C<MODULE>.
@@ -200,14 +191,6 @@ sub output ( $self, @strings ) {
 
 sub output_fh ( $self ) { $self->{'output_fh'} }
 
-sub output_history ($self) {
-	join $self->{'line_ending'},
-	map  { $_->[1] }
-	reverse
-	grep { $_->[0] eq 'output' }
-	$self->history->@*;
-	}
-
 =item * send_it( FILEHANDLE, MESSAGE )
 
 The method that actually output the message. This will immediately return
@@ -222,7 +205,6 @@ This will add the value of the C<line_ending> setting to C<MESSAGE>.
 
 =cut
 
-sub am_tracking_history ($self) { $self->{'max_history'} ne '-1' }
 sub send_it ( $self, $fh, $string ) {
 	if( $self->am_tracking_history ) {
 		my $source = (caller(1))[3] =~ s/.*:://r;
@@ -232,6 +214,58 @@ sub send_it ( $self, $fh, $string ) {
 	return if $self->is_quiet;
 	$string .= $self->{'line_ending'};
 	$fh->print($string);
+	}
+
+=back
+
+=head2 History
+
+=over 4
+
+=item * am_tracking_history
+
+=cut
+
+sub am_tracking_history ($self) { $self->{'max_history'} ne '-1' }
+
+=item * error_history
+
+Returns the error (not output) history as a single string.
+
+=cut
+
+sub _history_string ($self, $type) {
+	join $self->{'line_ending'},
+	map  { $_->[1] }
+	reverse
+	grep { $_->[0] eq 'output' }
+	$self->history->@*;
+	}
+
+sub error_history ($self) {
+	$self->_history_string('error');
+	}
+
+=item * history
+
+Returns a clone of the history array. Each item is a two-element array reference
+where the first item is the source (C<error> or C<output>) and the second item
+is the message.
+
+=cut
+
+sub history ($self) {
+	Storable::dclone $self->{'history'};
+	}
+
+=item * output_history
+
+Returns the output (not error) history as a single string.
+
+=cut
+
+sub output_history ($self) {
+	$self->_history_string('output');
 	}
 
 =back
