@@ -6,6 +6,7 @@ package eBird::IO;
 
 use namespace::autoclean;
 use Carp qw();
+use Storable qw();
 
 =encoding utf8
 
@@ -62,11 +63,15 @@ internal filehandles that don't do anything even if C<quiet> is false:
 
 =item * C<error_fh> - any object that can respond to C<print> (default: C<STDERR> with UTF-8)
 
+=item * C<history> - an array ref to hold the output messages. Anything that is not an array ref disables history.
+
+=item * C<line_ending> - the character to add to the end of any message (default: "\n")
+
+=item * C<max_history> - the maximum number of items in the history (default: 100). The value C<0> allows unlimited history, and C<-1> disables history.
+
 =item * C<output_fh> - any object that can respond to C<print> (default: C<STDOUT> with UTF-8)
 
 =item * C<quiet> - any object that can respond to C<print> (default: C<STDOUT>)
-
-=item * C<line_ending> - the character to add to the end of any message (default: "\n")
 
 =back
 
@@ -79,9 +84,11 @@ sub new ( $class, %args ) {
 		};
 	state $defaults = {
 		error_fh    => \*STDERR,
+		history     => [],
+		line_ending => "\n",
+		max_history => 100,
 		output_fh   => \*STDOUT,
 		quiet       => 0,
-		line_ending => "\n",
 		};
 	state $allowed = { map { $_, 1 } keys $defaults->%* };
 
@@ -89,6 +96,13 @@ sub new ( $class, %args ) {
 		map { $_ => $args{$_} }
 		grep { exists $allowed->{$_} }
 		keys %args;
+	$pass_through{'quiet'} = 0 + !! $pass_through{'quiet'};
+
+	if( exists $pass_through{'history'} and $pass_through{'history'} ne ref [] ) {
+		$pass_through{'history'}     = [];
+		$pass_through{'max_history'} = -1;
+		}
+
 	$pass_through{'quiet'} = 0 + !! $pass_through{'quiet'};
 
 	my %hash = ( $defaults->%*, %pass_through );
@@ -149,7 +163,16 @@ sub error ( $self, @strings ) {
 	$self->send_it( $self->error_fh, join "\n", @strings );
 	}
 
-sub error_fh ( $self ) { $self->{error_fh} }
+sub error_fh ( $self ) { $self->{'error_fh'} }
+
+=item * history
+
+
+=cut
+
+sub history ($self) {
+	Storable::dclone $self->{'history'};
+	}
 
 =item * optional_feature_needs( MODULE )
 
@@ -175,18 +198,37 @@ sub output ( $self, @strings ) {
 	$self->send_it( $self->output_fh, join "\n", @strings );
 	}
 
-sub output_fh ( $self ) { $self->{output_fh} }
+sub output_fh ( $self ) { $self->{'output_fh'} }
+
+sub output_history ($self) {
+	join $self->{'line_ending'},
+	map  { $_->[1] }
+	reverse
+	grep { $_->[0] eq 'output' }
+	$self->history->@*;
+	}
 
 =item * send_it( FILEHANDLE, MESSAGE )
 
 The method that actually output the message. This will immediately return
 is the object is set to be quiet.
 
+If C<max_history> is not C<-1>, C<send_it> adds each message to the history, with
+more recent messages at the front of the array. If C<max_history> is not C<0>,
+it truncates history to that number of messages. The C<quiet> flag has no effect on
+this, so you can still collect output even when quiet.
+
 This will add the value of the C<line_ending> setting to C<MESSAGE>.
 
 =cut
 
+sub am_tracking_history ($self) { $self->{'max_history'} ne '-1' }
 sub send_it ( $self, $fh, $string ) {
+	if( $self->am_tracking_history ) {
+		my $source = (caller(1))[3] =~ s/.*:://r;
+		unshift $self->{'history'}->@*, [ $source, $string ];
+		$self->{'history'}->$#* = ($self->{'max_history'} - 1 ) if $self->{'max_history'} and $self->{'history'}->@* > $self->{'max_history'};
+		}
 	return if $self->is_quiet;
 	$string .= $self->{'line_ending'};
 	$fh->print($string);
@@ -200,7 +242,8 @@ sub send_it ( $self, $fh, $string ) {
 
 =item * is_quiet
 
-Returns true if quiet is on, and false otherwise.
+Returns true if quiet is on, and false otherwise. There will be no output if
+this is true, although any strings will still show up in the history.
 
 =cut
 
