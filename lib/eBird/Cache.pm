@@ -88,12 +88,13 @@ sub dir ( $self ) { $self->{'dir'} }
 
 =item * exists(NAME)
 
-Returns true if there is a cache item with C<NAME>, and false otherwise.
+Returns true if there is a cache item with C<NAME> that has a non-zero size,
+and false otherwise.
 
 =cut
 
 sub exists ($self, $name) {
-	-e $self->dir->child($name);
+	-e $self->dir->child($name) and -s _;
 	}
 
 =item * list()
