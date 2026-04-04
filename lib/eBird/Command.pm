@@ -158,21 +158,42 @@ sub run ( $self, @args ) {
 
 	$self->cli->ebird->logger->debug("run: args after processing are <@args>");
 	my $action = $self->action_to_sub( shift @args );
-	$self->$action( @args );
+	my $rc = $self->$action( @args );
 
-	return ACTION_SUCCESS;
+	return $self->cli->exit($rc);
 	}
 
 =back
 
-=head1 TO DO
+=head2 Return values
 
+All C<action_> methods in the command modules should return a value to
+indicate what happened. This will propogate up to the thing that will finally
+call C<exit>.
 
-=head1 SEE ALSO
+	sub action_foo ($self, @args) {
+		...
+		@errors ? $self->error_value : $self->success_value;
+		}
 
 =over 4
 
-=item * eBird terms of use - https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+=item * error_value
+
+Return the value for an error exit.
+
+=cut
+
+sub error_value ($self) { 1 }
+
+=item * success_value
+
+=cut
+
+sub success_value ($self) { 0 }
+
+=back
+
 
 =item * eBird API - https://documenter.getpostman.com/view/664302/S1ENwy59
 
@@ -181,6 +202,14 @@ sub run ( $self, @args ) {
 =head1 SOURCE AVAILABILITY
 
 This source is in Github:
+=head1 TO DO
+
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * eBird terms of use - https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 	http://github.com/briandfoy/ebird
 
