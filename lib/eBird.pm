@@ -229,30 +229,37 @@ sub get ( $self, %args ) {
 
 	my $data;
 
-#	$self->logger->debug( "get: cache key is $args{cache_key}" );
-#	$self->logger->debug( "get: args => " . dumper(\%args) );
+	# try it from the cache first
+	if( defined $args{'cache_key'} ) {
+		$data = $self->cache->load( $args{'cache_key'} );
 
-	my $data;
-	if( defined $args{cache_key} ) {
-		$data = $self->cache->load( $args{cache_key} );
-
-		$data = decode_json($data) if( defined $data and $args{json} );
-		# $self->logger->debug( "get: data is -----\n" . dumper($data) . "\n-------\n" );
-		$self->cache->remove( $args{cache_key} ) unless defined $data;
+		$data = decode_json($data) if( defined $data and $args{'json'} );
+		$self->cache->remove( $args{'cache_key'} ) unless defined $data;
 		}
 
-	unless( defined $data ) {
+	# did not get it from cache, so get it live
+	unless( defined $data or 0 == length $data ) {
 		my $path_segment = $self->expand_path_template( @args{qw(path_template args)} );
 		my $url = $base->clone->path($path_segment);
-		$url->query($args{query}) if defined $args{query};
+		$url->query($args{'query'}) if defined $args{'query'};
 
 		my $tx = $self->ua->get( $url );
+		unless( $tx->result->is_success ) {
+			$self->io->error(
+				sprintf "Could not fetch URL <%s>. Code: %s Response: %s",
+					$url,
+					$tx->res->code,
+					 $tx->res->headers->to_string
+				);
+			return;
+			}
+
+
 		$data = $tx->res->body;
-# 		$self->logger->debug( $tx->req->to_string );
-		$self->cache->save( $args{cache_key}, $data ) if defined $args{cache_key};
+		$self->cache->save( $args{cache_key}, $data ) if defined $args{'cache_key'};
 
 		if( $tx->res->headers->content_type =~ /json/ ) {
-			$data = decode_json($data) if $args{json};
+			$data = decode_json($data) if $args{'json'};
 			}
 		}
 
