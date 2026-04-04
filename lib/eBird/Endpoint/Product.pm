@@ -158,6 +158,8 @@ sub checklist ( $self, $checklist_id ) {
 		path_template => 'product/checklist/view/{{subId}}',
 		);
 
+	return unless defined $data;
+
 	foreach my $o ( $data->observations->@* ) {
 		bless $o, 'eBird::Data::Observation';
 		}
