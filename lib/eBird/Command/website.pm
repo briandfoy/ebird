@@ -126,25 +126,6 @@ sub action_help ($self) {
 	$self->success_value;
 	}
 
-sub action ( $self ) {
-	$self->cli->ebird->logger->trace("In run for website");
-
-	my $checklists = $self->cli->ebird->website->checklists_summary;
-	if( ! defined $checklists or $checklists->@* == 0 ) {
-		$self->ebird->io->output( "Could not extract checklists" );
-		return $self->error_value;
-		}
-
-	my $places = ceil(log($checklists->@*) / log(10));
-	$self->ebird->io->output( 'There are checklists' );
-	my $template = '%*d   %10s   %10s   %s';
-	foreach my $c ( sort { $a->{'sequence'} <=> $b->{'sequece'} } $checklists->@* ) {
-		my $ymd = $c->{'datetime'} =~ s/T.*//r;
-		$self->ebird->io->output( sprintf $template, $places, $c->{'sequence'}, $ymd, $c->{'checklist'}, $c->{'location'} );
-		}
-
-	return $self->success_value;
-	}
 
 =back
 
