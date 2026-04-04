@@ -5,6 +5,8 @@ no feature qw(module_true);
 package eBird::Endpoint::Product;
 use parent qw(eBird::Endpoint::Base);
 
+use namespace::autoclean;
+use Carp qw(shortmess);
 use eBird::Data::Taxon;
 
 =encoding utf8
@@ -140,11 +142,13 @@ sub species_in_region ( $self, $region ) {
 		);
 	}
 
+=item * checklist( CHECKLIST_ID )
+
 =item * view_checklist( CHECKLIST_ID )
 
 =cut
 
-sub view_checklist ( $self, $checklist_id ) {
+sub checklist ( $self, $checklist_id ) {
 	my $data = $self->ebird->get(
 		args => {
 			subId => $checklist_id,
@@ -153,6 +157,17 @@ sub view_checklist ( $self, $checklist_id ) {
 		cache_key     => "checklist-$checklist_id",
 		path_template => 'product/checklist/view/{{subId}}',
 		);
+
+	foreach my $o ( $data->observations->@* ) {
+		bless $o, 'eBird::Data::Observation';
+		}
+
+	$data;
+	}
+
+sub view_checklist ( $self, $checklist_id ) {
+	$self->ebird->logger->warn(shortmess 'legacy call to view_checklist');
+	$self->checklist($checklist_id);
 	}
 
 =back
