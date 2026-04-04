@@ -75,6 +75,8 @@ sub action_show ( $self ) {
 
 		$self->cli->ebird->io->output( $string );
 		}
+
+	$self->success_value;
 	}
 
 =back

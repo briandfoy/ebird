@@ -83,7 +83,7 @@ sub action_checklists ( $self ) {
 	my $checklists = $self->cli->ebird->website->checklists_summary;
 	if( ! defined $checklists or $checklists->@* == 0 ) {
 		$self->ebird->io->output( "Could not extract checklists" );
-		return;
+		return $self->error_value;
 		}
 
 	my $places = ceil(log($checklists->@*) / log(10));
@@ -94,7 +94,7 @@ sub action_checklists ( $self ) {
 		$self->ebird->io->output( sprintf $template, $places, $c->{'sequence'}, $ymd, $c->{'location'} );
 		}
 
-	return 1;
+	return $self->success_value;
 	}
 
 =back
