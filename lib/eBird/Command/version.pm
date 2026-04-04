@@ -56,13 +56,7 @@ sub fallthrough_action { 'show' }
 =cut
 
 sub action_show ( $self ) {
-	$self->cli->ebird->logger->trace("In run for version");
-	$self->cli->ebird->io->output( join "\x{20}",
-		$self->cli->name,
-		"version",
-		$self->cli->version,
-		"(Perl $^V)"
-		);
+	$self->cli->ebird->io->output( $self->cli->version_line );
 	}
 
 =back
