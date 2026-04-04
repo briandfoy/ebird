@@ -69,6 +69,14 @@ sub action_delete ( $self, @args ) {
 
 sub action_fallthrough ( $self, @args ) { 'init' }
 
+=item * action_help
+
+=cut
+
+sub action_help ($self) {
+	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
+	}
+
 =item * action_init()
 
 =cut

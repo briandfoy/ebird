@@ -22,6 +22,14 @@ use Mojo::Util qw(dumper);
 
 =over 4
 
+=item * action_help
+
+=cut
+
+sub action_help ($self) {
+	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
+	}
+
 =item * action_info
 
 =cut

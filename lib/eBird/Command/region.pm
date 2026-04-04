@@ -77,6 +77,14 @@ sub action_fallthrough ( $self, @args ) {
 	$self->action_list( @args );
 	}
 
+=item * action_help
+
+=cut
+
+sub action_help ($self) {
+	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
+	}
+
 =item * action_info( REGION )
 
 =cut
