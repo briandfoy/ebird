@@ -7,6 +7,7 @@ use eBird;
 my $ebird = eBird->new;
 
 my $taxa = $ebird->taxonomy->taxa;
+say Mojo::Util::dumper($taxa);
 
 my %categories;
 foreach my $taxon ( $taxa->@* ) {
@@ -18,6 +19,7 @@ my $subspecies = $ebird->taxonomy->forms('cangoo');
 say Mojo::Util::dumper($subspecies);
 
 __END__
+
 https://science.ebird.org/en/use-ebird-data/the-ebird-taxonomy
 {
   "domestic" => 25,       # domestic species
