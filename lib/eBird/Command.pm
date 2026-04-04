@@ -47,6 +47,14 @@ sub register ( $class, $cli ) {
 
 =over 4
 
+=item * action_help
+
+=cut
+
+sub action_help ($self) {
+	$self->cli->ebird->io->output( "Help for " . ref $self );
+	}
+
 =item * cli
 
 =cut
