@@ -77,7 +77,56 @@ sub description ( $self ) {
 
 =cut
 
-sub action_checklists ( $self ) {
+sub action_checklists ( $self, @args ) {
+	@args = qw(list) unless @args;
+
+	my $checklists = $self->cli->ebird->website->checklists_summary;
+	if( ! defined $checklists or $checklists->@* == 0 ) {
+		$self->ebird->io->output( "Could not extract checklists" );
+		return $self->error_value;
+		}
+
+	my $places = ceil(log($checklists->@*) / log(10));
+
+	my $template = '%*d   %10s   %10s   %9s   %s';
+
+	$self->ebird->io->output( sprintf 'There are %d checklists', scalar $checklists->@* );
+	foreach my $c ( sort { $a->{'sequence'} <=> $b->{'sequence'} } $checklists->@* ) {
+		my $ymd = $c->{'datetime'} =~ s/T.*//r;
+		my $cache_key = 'checklist-' . $c->{'checklist'};
+		my $status = '';
+		if( $self->ebird->cache->exists($cache_key) ) {
+			$status = '(cached)';
+			}
+		elsif( $args[0] eq 'fetch' ) {
+			sleep 30;
+			$self->ebird->product->checklist($c->{'checklist'});
+			$status = $self->ebird->cache->exists($cache_key) ? '(fetched)' : '(failed)';
+			}
+
+		$self->ebird->io->output(
+			sprintf $template,
+				$places, $c->{'sequence'},
+				$ymd,
+				$c->{'checklist'},
+				$status,
+				$c->{'location'},
+			);
+		}
+
+	return $self->success_value;
+	}
+
+=item * action_help
+
+=cut
+
+sub action_help ($self) {
+	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
+	$self->success_value;
+	}
+
+sub action ( $self ) {
 	$self->cli->ebird->logger->trace("In run for website");
 
 	my $checklists = $self->cli->ebird->website->checklists_summary;
@@ -88,10 +137,10 @@ sub action_checklists ( $self ) {
 
 	my $places = ceil(log($checklists->@*) / log(10));
 	$self->ebird->io->output( 'There are checklists' );
-	my $template = '%*d   %10s   %s';
+	my $template = '%*d   %10s   %10s   %s';
 	foreach my $c ( sort { $a->{'sequence'} <=> $b->{'sequece'} } $checklists->@* ) {
 		my $ymd = $c->{'datetime'} =~ s/T.*//r;
-		$self->ebird->io->output( sprintf $template, $places, $c->{'sequence'}, $ymd, $c->{'location'} );
+		$self->ebird->io->output( sprintf $template, $places, $c->{'sequence'}, $ymd, $c->{'checklist'}, $c->{'location'} );
 		}
 
 	return $self->success_value;
