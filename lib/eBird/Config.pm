@@ -52,7 +52,7 @@ sub _check_file ($class, $file) {
 	}
 
 sub _guess_locale ($class) {
-	my @guesses =  map { s/\..*//r } grep { defined $ENV{$_} } qw(LANG LC_ALL);
+	my @guesses =  map { $ENV{$_} =~ s/\..*//r } grep { defined $ENV{$_} } qw(LANG LC_ALL);
 	push @guesses, 'en_US';
 
 	return $guesses[0];
