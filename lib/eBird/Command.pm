@@ -202,14 +202,6 @@ sub success_value ($self) { 0 }
 
 =back
 
-
-=item * eBird API - https://documenter.getpostman.com/view/664302/S1ENwy59
-
-=back
-
-=head1 SOURCE AVAILABILITY
-
-This source is in Github:
 =head1 TO DO
 
 
@@ -218,6 +210,14 @@ This source is in Github:
 =over 4
 
 =item * eBird terms of use - https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
+
+=item * eBird API - https://documenter.getpostman.com/view/664302/S1ENwy59
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This source is in Github:
 
 	http://github.com/briandfoy/ebird
 
