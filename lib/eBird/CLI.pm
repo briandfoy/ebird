@@ -93,7 +93,8 @@ sub ebird ($self) { $self->{'ebird'} }
 
 =item * exit(N)
 
-Exit with value C<N>.
+Exit with value C<N> using C<CORE::exit>. If this does not work for you,
+subclass and override (see F<t/lib/TestCLI> for example).
 
 This exists so you can override this to test the program without actually
 exiting.
@@ -109,6 +110,14 @@ Exit with value C<1>.
 =cut
 
 sub exit_error ($self) { $self->exit(1) }
+
+=item * exit_success
+
+Exit with value C<0>.
+
+=cut
+
+sub exit_success ($self) { $self->exit(0) }
 
 =item * exit_usage
 
