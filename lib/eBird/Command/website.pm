@@ -91,7 +91,11 @@ sub action_checklists ( $self, @args ) {
 	my $template = '%*d   %10s   %10s   %9s   %s';
 
 	$self->ebird->io->output( sprintf 'There are %d checklists', scalar $checklists->@* );
+
+	my $count =  0;
+	my $max   = 100;
 	foreach my $c ( sort { $a->{'sequence'} <=> $b->{'sequence'} } $checklists->@* ) {
+		last if $count >= $max;
 		my $ymd = $c->{'datetime'} =~ s/T.*//r;
 		my $cache_key = 'checklist-' . $c->{'checklist'};
 		my $status = '';
@@ -100,8 +104,13 @@ sub action_checklists ( $self, @args ) {
 			}
 		elsif( $args[0] eq 'fetch' ) {
 			sleep 30;
-			$self->ebird->product->checklist($c->{'checklist'});
-			$status = $self->ebird->cache->exists($cache_key) ? '(fetched)' : '(failed)';
+			$count++;
+			my $data = $self->ebird->product->checklist($c->{'checklist'});
+			$status = do {
+				   if( ! defined $data )                           { '(failed)'  }
+				elsif( ! $self->ebird->cache->exists($cache_key) ) { '(failed)'  }
+				else                                               { '(fetched)' }
+				};
 			}
 
 		$self->ebird->io->output(
