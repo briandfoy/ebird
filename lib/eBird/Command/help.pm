@@ -73,7 +73,7 @@ sub action_show ( $self ) {
 
 		$string =~ s/^(?!\R)/\t/gm;
 
-		$self->cli->ebird->io->output( "$string" );
+		$self->cli->ebird->io->output( $string );
 		}
 	}
 
