@@ -127,25 +127,15 @@ Exit with value C<2>.
 
 sub exit_usage ($self) { $self->exit(2) }
 
-=item * logger
+=item * handlers
 
-Returns the logger object, which should have the same interface as
-L<Mojo::Log>.
+Returns the names of all the handlers as a list.
 
 =cut
 
-sub logger ($self) {
-	$self->ebird->io->error( shortmess "deprecated use of <logger> instead of <ebird->logger>" );
-	$self->ebird->logger;
+sub handlers ($self) {
+	values $self->{'commands'}->%*;
 	}
-
-=item * name
-
-Returns the name of the program, which is "ebird" by default.
-
-=cut
-
-sub name ($self) { $self->{'name'} }
 
 =item * load_commands
 
@@ -201,15 +191,25 @@ sub load_file ($self, $file) {
 	return 1;
 	}
 
-=item * handlers
+=item * logger
 
-Returns the names of all the handlers as a list.
+Returns the logger object, which should have the same interface as
+L<Mojo::Log>.
 
 =cut
 
-sub handlers ($self) {
-	values $self->{'commands'}->%*;
+sub logger ($self) {
+	$self->ebird->io->error( shortmess "deprecated use of <logger> instead of <ebird->logger>" );
+	$self->ebird->logger;
 	}
+
+=item * name
+
+Returns the name of the program, which is "ebird" by default.
+
+=cut
+
+sub name ($self) { $self->{'name'} }
 
 =item * register( CLASS )
 
@@ -254,6 +254,20 @@ Returns the version of the command.
 
 sub version ($self) {
 	$self->{'version'};
+	}
+
+=item * version_line
+
+Returns the version line for program output.
+
+=cut
+
+sub version_line ($self) {
+	join "\x{20}",
+		$self->name,
+		"version",
+		$self->version,
+		"(Perl $^V)"
 	}
 
 =back
