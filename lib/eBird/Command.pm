@@ -5,9 +5,8 @@ package eBird::Command;
 
 use experimental qw(builtin);
 
-use builtin qw(weaken);
-use constant ACTION_FAILURE => 0;
-use constant ACTION_SUCCESS => 1;
+use builtin qw(blessed weaken);
+use Mojo::Loader qw(data_section);
 
 =encoding utf8
 
@@ -52,23 +51,9 @@ sub register ( $class, $cli ) {
 =cut
 
 sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . ref $self );
-	}
-
-=item * cli
-
-=cut
-
-sub cli ($self) {
-	$self->{'cli'};
-	}
-
-=item * ebird
-
-=cut
-
-sub ebird ($self) {
-	$self->cli->{'ebird'};
+	my $text = data_section( blessed $self, 'help.txt' );
+	$self->cli->ebird->io->output( join "\n\n", $self->cli->version_line, $text );
+	$self->success_value;
 	}
 
 =item * action_to_sub
@@ -79,17 +64,38 @@ sub action_to_sub ( $self, $command ) {
 	"action_" . $command
 	}
 
-=item * default_action
+=item * cli
 
 =cut
 
-sub default_action { return }
+sub cli ($self) {
+	$self->{'cli'};
+	}
+
+=item * default_action
+
+Returns C<help>.
+
+Each command should use the default C<default_help> action and add a F<help.txt>
+section in C<__DATA__>.
+
+=cut
+
+sub default_action { 'help' }
 
 =item * description
 
 =cut
 
 sub description ( $self ) { "No description available" }
+
+=item * ebird
+
+=cut
+
+sub ebird ($self) {
+	$self->cli->{'ebird'};
+	}
 
 =item * fallthrough_action
 
@@ -108,7 +114,9 @@ sub group ( $self ) {
 	ref($self) =~ s/.*:://r;
 	}
 
-=item * has_action
+=item * has_action(ACTION_NAME)
+
+Returns true if the command responds to C<ACTION_NAME>.
 
 =cut
 
@@ -135,7 +143,7 @@ sub has_fallthrough_action ($self) {
 
 =item * name
 
-Returns the last portion of the namespace, which for commands show be the same
+Returns the last portion of the namespace, which for commands should be the same
 as the command name.
 
 =cut
