@@ -254,7 +254,6 @@ sub get ( $self, %args ) {
 			return;
 			}
 
-
 		$data = $tx->res->body;
 		$self->cache->save( $args{cache_key}, $data ) if defined $args{'cache_key'};
 
@@ -276,11 +275,8 @@ sub get ( $self, %args ) {
 				bless $hash, $args{'bless_into'};
 				}
 			}
-		elsif( is_arrayref($data) ) {
+		elsif( is_arrayref($data) or is_hashref($data) ) {
 			bless $data, $args{'bless_into'}
-			}
-		elsif( is_hashref($data) ) {
-			bless $data, $args{'bless_into'};
 			}
 		}
 
