@@ -89,19 +89,19 @@ sub action_fallthrough ( $self, @args ) {
 	else {
 		$self->cli->io->error( "Did not understand <@args>" );
 		}
-}
+	}
 
 =item * action_pattern( BAND_CODE_PATTERN )
 
 =cut
 
 sub action_pattern ( $self, @args ) {
-	my $data = $self->api->taxonomy_by_band( $args[0] );
+	my $data = $self->cli->ebird->taxonomy_by_band( $args[0] );
 
 	foreach my $item ( $data->@* ) {
 		my @codes = sort grep { /$args[0]/i } keys $item->{banding_codes}->%*;
 		foreach my $code ( @codes ) {
-			$self->cli->io->output( sprintf "%4s %s (%s)\n",
+			$self->cli->ebird->io->output( sprintf "%4s %s (%s)\n",
 				$code,
 				map { $item->$_() } qw(common_name scientific_name)
 				);
@@ -117,7 +117,7 @@ sub action_list ( $self, @args ) {
 	my $hash = $self->api->taxonomy_all_bands;
 
 	foreach my $key ( sort keys $hash->%* ) {
-		$self->cli->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
+		$self->cli->ebird->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
 		}
 	}
 
