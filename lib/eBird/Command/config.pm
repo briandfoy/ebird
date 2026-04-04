@@ -49,14 +49,6 @@ sub description ( $self ) {
 
 =over 4
 
-=item * action_help
-
-=cut
-
-sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
-	}
-
 =item * action_show()
 
 =cut
@@ -129,4 +121,12 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 __PACKAGE__;
 
-__END__
+__DATA__
+
+@@ help.txt
+Show a summary of the config:
+
+	ebird config
+
+The values for the API key and the website password are shielded, although
+any values in the EBIRD_* enviroment variables are show literally.

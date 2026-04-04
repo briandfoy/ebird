@@ -99,7 +99,7 @@ sub action_pattern ( $self, @args ) {
 	my $data = $self->cli->ebird->taxonomy_by_band( $args[0] );
 
 	foreach my $item ( $data->@* ) {
-		my @codes = sort grep { /$args[0]/i } keys $item->{banding_codes}->%*;
+		my @codes = sort grep { /$args[0]/i } keys $item->{'banding_codes'}->%*;
 		foreach my $code ( @codes ) {
 			$self->cli->ebird->io->output( sprintf "%4s %s (%s)\n",
 				$code,
@@ -114,7 +114,7 @@ sub action_pattern ( $self, @args ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $hash = $self->api->taxonomy_all_bands;
+	my $hash = $self->cli->ebird->taxonomy_all_bands;
 
 	foreach my $key ( sort keys $hash->%* ) {
 		$self->cli->ebird->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
@@ -158,3 +158,8 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 =cut
 
 __PACKAGE__;
+
+__DATA__
+
+@@ help.txt
+This is the DATA section help text.

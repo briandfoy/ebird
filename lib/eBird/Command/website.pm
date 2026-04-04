@@ -26,11 +26,11 @@ eBird::Command::website - interact with the website
 
 =item * default_action
 
-Returns C<show>.
+Returns C<help>.
 
 =cut
 
-sub default_action { 'list' }
+sub default_action { 'help' }
 
 =item * description
 
@@ -126,15 +126,6 @@ sub action_checklists ( $self, @args ) {
 	return $self->success_value;
 	}
 
-=item * action_help
-
-=cut
-
-sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
-	$self->success_value;
-	}
-
 
 =back
 
@@ -173,3 +164,26 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 =cut
 
 __PACKAGE__;
+
+__DATA__
+
+@@ help.txt
+
+Output this help message:
+
+	ebird website
+
+	ebird website help
+
+Fetch the checklist list from ebird.com (or the cache) and display it:
+
+	ebird website checklists
+
+Fetch the checklist from ebird.com (or the cache), and fetch any checklists
+that are not already in the cache:
+
+	ebird website checklists fetch
+
+This only fetches 100 checklists at a timeat 30 second intervals to be nice to
+the eBird website. That's about the number it tolerates downloading in one
+session.

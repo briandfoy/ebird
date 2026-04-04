@@ -59,19 +59,12 @@ sub description ( $self ) {
 
 =over 4
 
-=item * action_help
-
-=cut
-
-sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
-	}
-
 =item * action_list
 
 =cut
 
 sub action_list ( $self, @args ) {
+	$self->cli->ebird->io->output( $self->cli->version_line . "\n" );
 	my $data = $self->ebird->taxonomy->locale_codes;
 
 	my $alt = join '|', map { quotemeta($_) } @args;
@@ -120,3 +113,15 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 =cut
 
 __PACKAGE__;
+
+__DATA__
+
+@@ help.txt
+
+Show the list of locales that eBird understands:
+
+	ebird locale list
+
+Show the locales that match a language code:
+
+	ebird locale list en

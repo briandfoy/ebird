@@ -57,14 +57,6 @@ sub fallthrough_action { 'view' }
 
 =over 4
 
-=item * action_help
-
-=cut
-
-sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
-	}
-
 =item * action_list
 
 =cut
@@ -226,3 +218,8 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 =cut
 
 __PACKAGE__;
+
+__DATA__
+
+@@ help.txt
+This is the DATA section help text.

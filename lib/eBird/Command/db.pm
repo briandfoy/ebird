@@ -69,14 +69,6 @@ sub action_delete ( $self, @args ) {
 
 sub action_fallthrough ( $self, @args ) { 'init' }
 
-=item * action_help
-
-=cut
-
-sub action_help ($self) {
-	$self->cli->ebird->io->output( "Help for " . __PACKAGE__ );
-	}
-
 =item * action_init()
 
 =cut
@@ -132,4 +124,7 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 __PACKAGE__;
 
-__END__
+__DATA__
+
+@@ help.txt
+This is the DATA section help text.
