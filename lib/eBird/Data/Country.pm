@@ -24,6 +24,10 @@ These objects represent the countries that eBird understands.
 
 =over 4
 
+=item * code
+
+Returns the two-digit code for the country.
+
 =item * name
 
 Returns the full name of the country.
