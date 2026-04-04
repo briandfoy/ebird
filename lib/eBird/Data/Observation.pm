@@ -66,6 +66,7 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 __PACKAGE__;
 
+__END__
 {
   "projId": "EBIRD",
   "subId": "S29893687",
