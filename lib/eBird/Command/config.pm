@@ -57,14 +57,22 @@ sub action_show ( $self, @args ) {
 	no warnings;
 	my $c = $self->cli->ebird->config;
 
+	my @used = map { "EBIRD_$_" } qw(API_KEY USERNAME PASSWORD CACHE_DIR LOG_LEVEL);
+	my %keys = map { $_ => 1 } grep { /\A EBIRD /x } (@used, keys %ENV);
+	@keys{qw(LANG LC_ALL HOME LOGDIR HOMEPATH USERPROFILE EDITOR)} = (1)x7;
+	my( $max_length ) = sort { $b <=> $a } map { length } keys %keys;
+
+	my $env =
+		join "\n",
+		map { sprintf "\t%-*s  %s", $max_length, $_, $ENV{$_} }
+		sort
+		keys %keys;
+
 	my $e = <<~"HERE";
 		Implementor: @{[ blessed $c ]}
 
 		Environment:
-			EBIRD_API_KEY:    $ENV{'EBIRD_API_KEY'}
-			EBIRD_CACHE_DIR:  $ENV{'EBIRD_CACHE_DIR'}
-			EBIRD_PASSWORD:   $ENV{'EBIRD_PASSWORD'}
-			EBIRD_USERNAME:   $ENV{'EBIRD_USERNAME'}
+		$env
 
 		File: @{[ $c->path ]}
 
@@ -80,7 +88,7 @@ sub action_show ( $self, @args ) {
 				password: @{[ $c->website->password ]}
 		HERE
 
-	$self->cli->ebird->io->output($e);
+	$self->cli->ebird->io->output( join "\n\n", $self->cli->version_line, $e);
 	}
 
 =back
