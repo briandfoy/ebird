@@ -40,6 +40,7 @@ sub new ($class, $file, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
 
     my $dbh = DBI->connect("dbi:SQLite:dbname=$path", '', '', { RaiseError => 1 });
 
+	$ebird->logger->debug("database path is <$path>");
     bless { dbh => $dbh, ebird => $ebird, path => $path }, $class;
 	}
 
@@ -167,6 +168,25 @@ sub _load_taxonomy_versions ($self) {
 =cut
 
 sub path ($self) { $self->{'path'} }
+
+=back
+
+=head2 Data specific things
+
+=head3 Bands
+
+=over 4
+
+=item * all_bands
+
+=cut
+
+sub all_bands ($self) {
+
+
+	}
+
+
 
 =back
 
