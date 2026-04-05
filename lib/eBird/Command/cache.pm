@@ -37,7 +37,7 @@ B<ebird> will fetch it through the eBird API.
 
 	% ebird cache rm checklist-S137137137
 
-Remove all the items:
+Remove all the items (this might mean you have to refetch a lot of stuff):
 
 	% ebird cache clear
 
@@ -209,7 +209,9 @@ sub action_open ( $self, @args ) {
 
 	}
 
-=item * action_show
+=item * action_show( KEY )
+
+Show the raw data from the cache item named C<KEY>.
 
 =cut
 
@@ -274,4 +276,39 @@ __PACKAGE__;
 __DATA__
 
 @@ help.txt
-This is the DATA section help text.
+This program aggressively caches anything it fetches or processes since most
+of the data rarely or infrequently changes.
+
+List all the cache keys, which is the default action:
+
+	ebird cache
+
+This is the same thing explicitly:
+
+	ebird cache list
+
+List only those that match a pattern (Perl):
+
+	ebird cache list PATTERN
+
+Look inside a cached file:
+
+	ebird cache show KEY
+
+Open the cached file in the editor specified in the C<EDITOR> environment variable,
+where you can change the contents and save it:
+
+	ebird cache open KEY
+
+Delete a cached file:
+
+	ebird cache delete KEY
+
+Delete anything matching a pattern (and KEY in the previous example is a pattern
+really):
+
+	ebird cache delete PATTERN
+
+But try that with a dry run first to see what it would delete:
+
+	ebird cache delete -n PATTERN

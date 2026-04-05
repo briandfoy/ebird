@@ -16,7 +16,13 @@ eBird::Command::website - interact with the website
 
 =head1 SYNOPSIS
 
+Show all of you checklists:
+
 	% ebird website checklists
+
+Read more:
+
+	% ebird website help
 
 =head1 DESCRIPTION
 
@@ -26,13 +32,18 @@ eBird::Command::website - interact with the website
 
 =item * default_action
 
-Returns C<help>.
+Returns C<help>. If you invoke the C<website> command with no other arguments,
+you get the help message.
 
 =cut
 
 sub default_action { 'help' }
 
 =item * description
+
+The description for this command. This is shown in the help message.
+
+	ebird help
 
 =cut
 
@@ -48,6 +59,9 @@ sub description ( $self ) {
 =over 4
 
 =item * action_checklists
+
+Fetch the list of checklists from the eBird website. The pages from the website
+are cached, and their reduction to data is cached.
 
 =cut
 
@@ -184,6 +198,22 @@ that are not already in the cache:
 
 	ebird website checklists fetch
 
-This only fetches 100 checklists at a timeat 30 second intervals to be nice to
-the eBird website. That's about the number it tolerates downloading in one
-session.
+This only fetches 100 checklists at a time, fetching one every 30 second,
+to be nice to the eBird website. That's about the number it tolerates
+downloading in one session. Cornell warns about mass data harvesting with
+this tool.
+
+The website pages and data generated from them are cached. Look for the cache
+items with "checklist" in the name (but not at the start)
+
+	ebird cache list .-checklist
+
+Delete those files directly or through this tool:
+
+	ebird cache delete ...
+
+Each checklist item from the website comes with a sequence number, but don't
+count on that being stable. That's there to order the items relative to each
+other, but if you add or delete a checklist, that number could change. This
+program does not use the sequence for anything, although it's present in the
+data it stores.
