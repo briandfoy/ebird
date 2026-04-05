@@ -230,15 +230,18 @@ sub get ( $self, %args ) {
 	my $data;
 
 	# try it from the cache first
-	if( defined $args{'cache_key'} ) {
+	if( defined $args{'cache_key'} and $self->cache->exists($args{'cache_key'}) ) {
+		$self->logger->debug( 'get: cache hit for ' . $args{'cache_key'} );
 		$data = $self->cache->load( $args{'cache_key'} );
+		$self->logger->debug( 'get: cache hit for ' . $args{'cache_key'} , ' has length ' . length $data );
 
 		$data = decode_json($data) if( defined $data and $args{'json'} );
 		$self->cache->remove( $args{'cache_key'} ) unless defined $data;
 		}
 
-	# did not get it from cache, so get it live
-	unless( defined $data or 0 == length $data ) {
+	# did not get it from cache, so get it live. If data is empty, it was
+	# probably in the cache by mistake.
+	unless( defined $data and 0 < length $data ) {
 		my $path_segment = $self->expand_path_template( @args{qw(path_template args)} );
 		my $url = $base->clone->path($path_segment);
 		$url->query($args{'query'}) if defined $args{'query'};
@@ -249,13 +252,13 @@ sub get ( $self, %args ) {
 				sprintf "Could not fetch URL <%s>. Code: %s Response: %s",
 					$url,
 					$tx->res->code,
-					 $tx->res->headers->to_string
+					$tx->res->headers->to_string
 				);
 			return;
 			}
 
 		$data = $tx->res->body;
-		$self->cache->save( $args{cache_key}, $data ) if defined $args{'cache_key'};
+		$self->cache->save( $args{'cache_key'}, $data ) if defined $args{'cache_key'};
 
 		if( $tx->res->headers->content_type =~ /json/ ) {
 			$data = decode_json($data) if $args{'json'};
