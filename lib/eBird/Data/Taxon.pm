@@ -68,8 +68,7 @@ sub new_from_code ($class, $species_code) {
 
 =item * banding_codes
 
-Returns the banding code. This is labeled as C<banding_codes> in the data, but
-no taxa has more than one code so far.
+Returns the banding code.
 
 =item * category
 

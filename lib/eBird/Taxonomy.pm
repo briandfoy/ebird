@@ -5,14 +5,20 @@ no feature qw(module_true);
 package eBird::Taxonomy;
 use Exporter qw(import);
 
+use namespace::autoclean;
+use eBird::Util qw(has_sqlite);
+
 =encoding utf8
 
 =head1 NAME
 
-eBird::Taxonomy -
+eBird::Taxonomy - tools that deal with birds collectively
 
 =head1 SYNOPSIS
 
+	use eBird::Taxonomy;
+
+	my $object = eBird::Taxonomy->new( $ebird );
 
 =head1 DESCRITION
 
@@ -82,8 +88,39 @@ sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet)) {
 
 =cut
 
-sub taxonomy_all_bands ( $self ) {
-	my $taxonomy = $self->taxonomy;
+sub all_bands ( $self ) {
+	state $cache_key = 'bands';
+
+	my $data;
+
+	# try the cache first
+	$self->ebird->io->logger->debug( "all_bands: trying the cache for <$cache_key>" );
+	if( $self->ebird->cache->exists($cache_key) ) {
+		$self->ebird->io->logger->debug( "all_bands: loading cache for <$cache_key>" );
+		$data = $self->ebird->cache->load($cache_key);
+		$data = eval { decode_json($data) };
+		return $data if defined $data;
+		}
+
+	$self->ebird->io->logger->debug( "all_bands: trying the database" );
+	if( has_sqlite() ) {
+		state $sth = $self-> >dbh->prepare
+		}
+
+	# get it from the taxonomy
+	$self->ebird->io->logger->debug( "all_bands: trying the database" );
+	unless( @bands ) {
+		my $taxonomy = $self->ebird->taxonomy->taxa;
+		foreach my $item ( $taxonomy->@* ) {
+			next unless $item->banding_codes;
+			$self->ebird->logger->debug( "all_bands: ")
+			$results{$_} = $item for keys $item->{banding_codes}->%*;
+			}
+
+
+		}
+
+
 
 	my %results;
 	foreach my $item ( $taxonomy->@* ) {

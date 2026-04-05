@@ -114,7 +114,7 @@ sub action_pattern ( $self, @args ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $hash = $self->cli->ebird->taxonomy_all_bands;
+	my $taxa = $self->cli->ebird->taxonomy;
 
 	foreach my $key ( sort keys $hash->%* ) {
 		$self->cli->ebird->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
