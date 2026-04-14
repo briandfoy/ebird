@@ -7,6 +7,7 @@ use namespace::autoclean;
 use Carp qw(carp);
 use File::Path qw(make_path);
 use File::Spec::Functions qw(catfile);
+use Mojo::JSON qw(decode_json encode_json);
 use Mojo::Log;
 use Mojo::Util qw(decode encode);
 
@@ -142,6 +143,15 @@ sub load_decode ( $self, $key, $encoding = 'UTF-8' ) {
 	return;
 	}
 
+=item * load_json ( $self, $key )
+
+=cut
+
+sub load_json ($self, $key) {
+	my $raw = $self->load($key);
+	decode_json($raw);
+	}
+
 =item * logger()
 
 =cut
@@ -165,8 +175,15 @@ Remove the file represented by KEY.
 =cut
 
 sub remove ( $self, @keys ) {
-	$self->logger->debug( "remove: @keys" );
-	$self->path($_)->remove for @keys;
+	$self->logger->debug( "cache remove: @keys" );
+	my $errors = 0;
+	foreach my $key ( @keys ) {
+		my $path = $self->path($key);
+		$self->logger->debug( "cache key <$key> path <$path>: $@" ) if $@;
+		$errors++ unless eval { $self->path($key)->remove; 1 };
+		$self->logger->error( "could not remove cache key <$key>: $@" ) if $@;
+		}
+	return ! $errors;
 	}
 
 =item * save( KEY, STRING )
@@ -189,6 +206,14 @@ Encode C<STRING> as C<ENCODING> (or UTF-8 by default) and save it.
 
 sub save_encode ( $self, $key, $string, $encoding = 'UTF-8' ) {
 	$self->save( $key, encode $encoding, $string );
+	}
+
+=item * save_json( KEY, DATA )
+
+=cut
+
+sub save_json ( $self, $key, $data ) {
+	$self->save( $key, encode_json($data) );
 	}
 
 =back

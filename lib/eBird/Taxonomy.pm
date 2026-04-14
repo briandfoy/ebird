@@ -40,7 +40,9 @@ sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet)) {
 	# this is big, but we cache the results too, and this is a singleton
 	$self->{'taxonomy'} = $ebird->taxonomy->taxa;
 
-	$self->invert_taxonomy;
+	# $self->invert_taxonomy;
+
+	return $self;
 	}
 
 =begin comment
@@ -84,8 +86,12 @@ sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet)) {
 =cut
 
 
-=item * taxonomy_all_bands()
+=item * all_bands()
 
+Returns a hash reference where the keys are the band code and the value
+is a L<eBird::Data::Taxon> object for the species assigned that code.
+
+Some species
 =cut
 
 sub all_bands ( $self ) {
@@ -93,42 +99,56 @@ sub all_bands ( $self ) {
 
 	my $data;
 
-	# try the cache first
-	$self->ebird->io->logger->debug( "all_bands: trying the cache for <$cache_key>" );
+	state $sql = <<~'SQL';
+		SELECT
+			*
+		FROM
+			BandingCodes
+		SQL
+
+
 	if( $self->ebird->cache->exists($cache_key) ) {
-		$self->ebird->io->logger->debug( "all_bands: loading cache for <$cache_key>" );
-		$data = $self->ebird->cache->load($cache_key);
-		$data = eval { decode_json($data) };
-		return $data if defined $data;
+		$self->ebird->logger->debug( "all_bands: loading cache for <$cache_key>" );
+		$data = $self->ebird->cache->load_json($cache_key);
 		}
 
-	$self->ebird->io->logger->debug( "all_bands: trying the database" );
-	if( has_sqlite() ) {
-		state $sth = $self-> >dbh->prepare
+	if( ! defined $data and has_sqlite() ) {
+		$self->ebird->logger->debug( "all_bands: loading from database" );
+
+		my $sqlite = eBird::SQLite->new( $self->ebird );
+		my %hash = map {
+			( $_->[1], $_->[0] )
+			} $sqlite->dbh->selectall_arrayref( $sql )->@*;
+
+		$data = \%hash;
 		}
 
-	# get it from the taxonomy
-	$self->ebird->io->logger->debug( "all_bands: trying the database" );
-	unless( @bands ) {
+	if( ! defined $data ) {
+		$self->ebird->logger->debug( "all_bands: loading from taxonomy" );
 		my $taxonomy = $self->ebird->taxonomy->taxa;
+
+		my %hash;
 		foreach my $item ( $taxonomy->@* ) {
 			next unless $item->banding_codes;
-			$self->ebird->logger->debug( "all_bands: ")
-			$results{$_} = $item for keys $item->{banding_codes}->%*;
+			foreach my $code ( split /\s+/, $item->banding_codes ) {
+				$hash{$code} = $item->species_code;
+				}
 			}
-
-
+		$data = \%hash;
 		}
 
+	$self->ebird->cache->save_json($cache_key, $data);
 
-
-	my %results;
-	foreach my $item ( $taxonomy->@* ) {
-		$results{$_} = $item for keys $item->{banding_codes}->%*;
-		}
-
-	return \%results;
+	return $data;
 	}
+
+=item * ebird
+
+Returns the embedded L<eBird> object.
+
+=cut
+
+sub ebird ($self) { $self->{'ebird'} }
 
 =back
 

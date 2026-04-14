@@ -306,10 +306,17 @@ This does not change the existing object but returns a new one.
 =cut
 
 sub inflate ($self, $ebird = eBird->new( io => eBird::IO->new_quiet )) {
+	return $self if $self->is_inflated;
 	my $taxon =
 		first
 		{ $_->species_code eq $self->species_code }
 		$ebird->taxonomy->taxa->@*;
+
+	foreach my $key ( keys $taxon->%* ) {
+		$self->{$key} = $taxon->{$key};
+		}
+
+	return $self;
 	}
 
 =item * is_inflated

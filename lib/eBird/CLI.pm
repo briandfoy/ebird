@@ -242,7 +242,12 @@ and passes the C<ARGS> array.
 =cut
 
 sub run ($self, $command, @args) {
-	my $rc = $self->{'commands'}{lc $command}->run( @args );
+	unless( exists $self->{'commands'}{lc $command} ) {
+		$self->ebird->io->error( "No such command <$command>\n" );
+		$command = 'help';
+		}
+
+	my $rc = eval { $self->{'commands'}{lc $command}->run( @args ) };
 	defined $rc ? $self->exit($rc) : $self->exit_error;
 	}
 

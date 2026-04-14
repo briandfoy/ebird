@@ -26,11 +26,11 @@ eBird::SQLite -
 
 =over 4
 
-=item * new( FILE [,EBIRD] )
+=item * new( [EBIRD [, FILE] ] )
 
 =cut
 
-sub new ($class, $file, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
+sub new ($class, $ebird = eBird->new( io => eBird::IO->new_quiet ), $file = $class->default_filename ) {
  	state $rc = require DBI;
 
 	my $path = catfile( $ebird->cache->dir, $file );
@@ -55,6 +55,12 @@ sub new ($class, $file, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
 =cut
 
 sub dbh ($self) { $self->{'dbh'} }
+
+=item * default_filename
+
+=cut
+
+sub default_filename ($self) { 'ebird.db' }
 
 =item * ebird
 

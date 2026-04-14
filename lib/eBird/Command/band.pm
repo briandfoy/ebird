@@ -7,6 +7,7 @@ use parent qw(eBird::Command);
 
 use Mojo::Util qw(dumper);
 
+use eBird::Taxonomy;
 use eBird::Util qw(:all);
 
 =encoding utf8
@@ -96,9 +97,9 @@ sub action_fallthrough ( $self, @args ) {
 =cut
 
 sub action_pattern ( $self, @args ) {
-	my $data = $self->cli->ebird->taxonomy_by_band( $args[0] );
+	my $bands = $self->cli->ebird->taxonomy->bands;
 
-	foreach my $item ( $data->@* ) {
+	foreach my $item ( $bands->@* ) {
 		my @codes = sort grep { /$args[0]/i } keys $item->{'banding_codes'}->%*;
 		foreach my $code ( @codes ) {
 			$self->cli->ebird->io->output( sprintf "%4s %s (%s)\n",
@@ -114,10 +115,21 @@ sub action_pattern ( $self, @args ) {
 =cut
 
 sub action_list ( $self, @args ) {
-	my $taxa = $self->cli->ebird->taxonomy;
+	$self->cli->ebird->io->output( "action_list: In list" );
 
-	foreach my $key ( sort keys $hash->%* ) {
-		$self->cli->ebird->io->output( sprintf "%s  %s\n", $key, $hash->{$key}{common_name} );
+	my $taxonomy = eval { eBird::Taxonomy->new( $self->ebird ) };
+
+	my $bands = eval { $taxonomy->all_bands };
+	$self->cli->ebird->io->error( "action_list: AT: <$@>" );
+	$self->cli->ebird->io->output( "action_list: bands " . ref $bands );
+	$self->cli->ebird->io->output( "action_list: bands has " . keys $bands->%* );
+	$self->cli->ebird->io->output( "action_list: bands has " . dumper( $bands ) );
+
+	foreach my $key ( sort keys $bands->%* ) {
+		no warnings 'uninitialized';
+		my $taxon = eBird::Data::Taxon->new_from_code( $bands->{$key} );
+		$taxon->inflate;
+		$self->cli->ebird->io->output( sprintf "%s  %s  %s", $key, $taxon->species_code, $taxon->common_name );
 		}
 	}
 
