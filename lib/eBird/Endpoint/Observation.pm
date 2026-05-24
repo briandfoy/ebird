@@ -296,7 +296,6 @@ sub recent_species_in_region ($self, $region, $species) {
 			speciesCode => $species->code,
 			},
 		bless_into    => 'eBird::Data::Observation',
-		cache_key     => "adjacent_regions-" . $region->code,
 		path_template => $path_template,
 		required      => [],
 		validate      => {},
