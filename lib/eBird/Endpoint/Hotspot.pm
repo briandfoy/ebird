@@ -5,6 +5,9 @@ no feature qw(module_true);
 package  eBird::Endpoint::Hotspot;
 use parent qw(eBird::Endpoint::Base);
 
+use namespace::autoclean;
+use eBird::Util qw(parse_csv);
+
 =encoding utf8
 
 =head1 NAME
@@ -30,8 +33,6 @@ eBird::Endpoint::Hotspot -
 =item * hotspots_in_region( COUNTRY, [, SUBNATIONAL1], [, SUBNATIONAL2] )
 
 =cut
-
-
 
 sub hotspots_in_region ( $self, $region ) {
 	state $path_template = 'ref/hotspot/{{regionCode}}';
@@ -110,7 +111,7 @@ sub parse_location_csv ( $self, $csv_data ) {
 		)
 		];
 
-	$self->parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
+	parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
 	}
 
 sub nearby ($self, $latlong, $args) {
@@ -132,7 +133,7 @@ sub nearby ($self, $latlong, $args) {
 			},
 		);
 
-	$self->ebird->parse_location_csv($data);
+	$self->parse_location_csv($data);
 	}
 
 =back

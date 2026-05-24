@@ -335,7 +335,7 @@ sub normalize_date :Export ($date) {
 
 =cut
 
-sub parse_csv ( $data, $headers, $bless_into ) {
+sub parse_csv :Export ( $data, $headers, $bless_into ) {
 	state $rc = require Text::CSV_XS;
 
 	load_module($bless_into) if defined $bless_into;
