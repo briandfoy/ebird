@@ -62,7 +62,6 @@ sub info ( $self, $region ) {
 		);
 	}
 
-
 =item * subregion_list_for( REGION_TYPE, PARENT_REGION_CODE )
 
 C<REGION_TYPE> is
