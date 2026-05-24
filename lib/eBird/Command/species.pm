@@ -18,7 +18,7 @@ eBird::Command::species -  show taxonomic species information
 
 =head1 SYNOPSIS
 
-	% ebird version
+	% ebird species
 
 =head1 DESCRIPTION
 
