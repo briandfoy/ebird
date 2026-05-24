@@ -23,8 +23,8 @@ Accept the defaults, which uses C<STDOUT> and C<STDERR> and is not quiet:
 	my $io = eBird::IO->new();
 
 	# new line is always appended
-	$io->output( "We did something" );
-	$io->error( "There was an error" );
+	$io->output( "We did something to STDOUT" );
+	$io->error( "There was an error that goes to STDERR" );
 
 	# this calls C<shortmess>
 	$io->carp( "message like Carp::carp" );
