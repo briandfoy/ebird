@@ -28,7 +28,7 @@ eBird::Command::region - show region information
 
 =item * default_action
 
-Returns C<show>.
+Returns C<list>.
 
 =cut
 
