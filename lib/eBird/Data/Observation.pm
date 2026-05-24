@@ -4,6 +4,7 @@ no feature qw(module_true);
 
 package eBird::Data::Observation;
 use parent qw(eBird::Data::Base);
+use String::Sprintf;
 
 =encoding utf8
 
@@ -41,6 +42,7 @@ This is not part of the eBird observation data, but
 =cut
 
 sub elevation ($self) {
+	return 0;
 	unless( defined $self->{'geo'} ) {
 		$self->{'geo'} = eBird::Data::Geo->new($self);
 		}
@@ -76,11 +78,11 @@ sub latitude ($self) { $self->lat }
 
 sub location_id ($self) { $self->locId }
 
-=item * location
+=item * location_name
 
 =cut
 
-sub location ($self) { $self->locId }
+sub location_name ($self) { $self->locName }
 
 =item * longitude
 
@@ -131,6 +133,25 @@ sub is_valid ($self) { $self->obsValid ? 1 : 0 }
 
 =back
 
+=head2 Instance methods
+
+=over 4
+
+=item * format( FORMAT )
+
+Returns a string representing the object formatted according to the
+sprintf-style C<FORMAT>. See L</Formatting>.
+
+=cut
+
+sub format ($self, $format) {
+	state $formatter = $self->_make_formatter;
+	my $line = eval { $formatter->sprintf( $format, $self ) };
+	return $line;
+	}
+
+=back
+
 =head2 KML
 
 =over 4
@@ -140,29 +161,27 @@ sub is_valid ($self) { $self->obsValid ? 1 : 0 }
 =cut
 
 sub kml_placemark ($self) {
-	state $template = <<~'KML'
+	state $template = <<~'KML';
 		<Placemark>
-			<name>%s</name>
-			<description><![CDATA[%s]]</description>
+			<name><![CDATA[%s]]></name>
+			<description><![CDATA[%s]]></description>
 			<Point>
-				<coordinates>%d,%d,%d</coordinates>
+				<coordinates>%f,%f,%f</coordinates>
 			</Point>
 		</Placemark>
 		KML
 
-	my $description = <<~"DESC";
-		This is the description
-		DESC
+	my $description = "This is the description";
 
 	my @args = (
-		join( ' ', $self->yyyymmdd, $self-> ),
+		join( ' ', $self->date, $self->location_name ),
 		$description,
 		$self->longitude,
 		$self->latitude,
 		$self->elevation,
 		);
 
-	sprintf $template,
+	sprintf $template, @args;
 	}
 
 
@@ -176,30 +195,30 @@ sub _make_formatter ($self) {
 	state $rc = require String::Sprintf;
 	no warnings qw(numeric);
 	String::Sprintf->formatter(
-		'b' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, join ', ', $V->[0]->banding_codes->@*; },
-		'c' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->category },
-		'e' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct ? '*' : ' ' },
-		'E' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct_year },
-		'f' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_common_name },
-		'F' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_scientific_name },
-		'g' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->genus },
-		'n' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->common_name; },
-		'o' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->order },
-		'r' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->report_as },
-		'S' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->scientific_name },
-		's' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->species_code },
-		'u' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->subspecies },
-		't' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->taxon_order },
+		'c' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->checklist_id               },
+		'd' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->date                       },
+		'g' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, join ', ', $V->[0]->geo_coordinates },
+		'k' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->kml_placemark              },
+		'l' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->location_id                },
+		'L' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->location_name              },
+		'n' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->common_name                },
+		'N' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->count                      },
+		'p' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->is_private  ? '*' : ' '    },
+		'r' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->is_reviewed ? '*' : ' '    },
+		'S' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->scientific_name            },
+		's' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->species_code               },
+		't' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->taxon->taxon_order         },
+		'v' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->is_valid ? '*' : ' ';      },
 		);
 	}
 
 =over 4
 
+=item * C<c> - Sub ID (checklist ID)
+
 =item * C<d> - date
 
 =item * C<g> - latitude,longitude
-
-=item * C<c> - Sub ID (checklist ID)
 
 =item * C<l> - location name
 
@@ -209,32 +228,17 @@ sub _make_formatter ($self) {
 
 =item * C<N> - count
 
-=item * C<p> - private
+=item * C<p> - private (C<*> if true, or C< > (space) if false)
 
-=item * C<r> - reviewed
+=item * C<r> - reviewed (C<*> if true, or C< > (space) if false)
 
 =item * C<S> - scientific name
 
 =item * C<s> - species code
 
+=item * C<t> - taxon order
+
 =item * C<v> - valid  (C<*> if true, or C< > (space) if false)
-
-    "howMany" => 1,
-    "comName" => "Hermit Thrush",
-    "obsDt" => "2026-05-22 16:54",
-    "locationPrivate" => $VAR1->[0]{"obsValid"},
-    "obsValid" => $VAR1->[0]{"obsValid"},
-    "sciName" => "Catharus guttatus",
-    "speciesCode" => "herthr",
-    "locId" => "L20689490",
-
-    "lat" => "42.8381386",
-    "lng" => "-72.7107023",
-    "locName" => "South Pond Loop, Marlboro, Vermont, US (42.838, -72.711)",
-
-  bless( {
-    "subId" => "S344183457"
-  }, 'eBird::Data::Observation' ),
 
 =back
 

@@ -41,6 +41,15 @@ Returns C<list>.
 
 sub default_action { 'list' }
 
+=item * default_format
+
+The default format for each observation in the C<list> action. See
+L<eBird::Data::Observation> for details.
+
+=cut
+
+sub default_format { '%d %L (%g)' }
+
 =item * description
 
 =cut
@@ -59,24 +68,63 @@ sub fallthrough_action ( $self ) { 'fallthrough' }
 
 =head2 Actions
 
-=item * action_list( REGION, SPECIES_CODE )
+=item * action_kml( SPECIES_CODE, REGION_CODE )
 
 =cut
 
-sub action_list ( $self, @args ) {
-	say STDERR "recent action_list";
-	if( @args and ! looks_like_region($args[0]) ) {
-		$self->cli->ebird->io->error( "$args[0] does not look like a region" );
+sub action_kml ( $self, $species, $region ) {
+	state $kml_header = <<~"KML";
+		<?xml version="1.0" encoding="UTF-8"?>
+		<kml xmlns="http://www.opengis.net/kml/2.2">
+		<Document>
+		KML
+
+	state $kml_footer = <<~"KML";
+		</Document>
+		</kml>
+		KML
+
+	state $format = '%k';
+
+	if( defined $region and ! looks_like_region($region) ) {
+		$self->cli->ebird->io->error( "$region does not look like a region" );
 		return;
 		}
 
-	my $observations = $self->cli->ebird->observation->recent_species_in_region( @args );
-	return unless $data->@*;
+	my $observations = $self->cli->ebird->observation->recent_species_in_region( $region, $species );
+	return unless $observations->@*;
+
+	$self->cli->ebird->io->output( $kml_header );
 
 	foreach my $obs ( $observations->@* ) {
-
+		my $line = $obs->format( $format );
+		$self->cli->ebird->io->output( $line ) if length $line;
 		}
-	$self->cli->ebird->io->output( dumper($data) );
+
+	$self->cli->ebird->io->output( $kml_footer )
+	}
+
+=item * action_list( SPECIES_CODE, REGION_CODE )
+
+=cut
+
+sub action_list ( $self, $species, $region, $format = $self->default_format ) {
+	if( defined $region and ! looks_like_region($region) ) {
+		$self->cli->ebird->io->error( "$region does not look like a region" );
+		return;
+		}
+
+	my $observations = $self->cli->ebird->observation->recent_species_in_region( $region, $species );
+	$self->cli->ebird->logger->debug( sprintf "There are %d observations for <%s> in <%s>", scalar $observations->@*, $species, $region );
+	unless( $observations->@* ) {
+		$self->cli->ebird->io->error( "No observations for <$species> in <$region>" );
+		return;
+		}
+
+	foreach my $obs ( $observations->@* ) {
+		my $line = $obs->format( $format );
+		$self->cli->ebird->io->output( $line ) if length $line;
+		}
 	}
 
 =back
@@ -115,7 +163,7 @@ https://www.birds.cornell.edu/home/ebird-api-terms-of-use/
 
 =cut
 
-__PACKAGE__;
+my $last = __PACKAGE__;
 
 __DATA__
 
