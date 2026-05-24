@@ -7,6 +7,7 @@ use parent qw(eBird::Command);
 
 use namespace::autoclean;
 use Mojo::Util qw(dumper);
+use String::Sprintf;
 
 use eBird::Util qw(:all);
 
@@ -59,16 +60,13 @@ sub fallthrough_action { 'show' }
 =cut
 
 sub action_list ( $self, @args ) {
-	my $data = $self->ebird->taxonomy->taxa;
+	my $format = $args[0] // '%n';
 
-	my %results;
-	foreach my $item ( $data->@* ) {
-		next if( defined $args[0] and $item->scientific_name !~ m/$args[0]/i );
-		$results{$item->scientific_name}++;
-		}
-
-	foreach my $key ( sort keys %results ) {
-		$self->cli->ebird->io->output( sprintf "%s\n", $key );
+	my $taxa = $self->ebird->taxonomy->taxa;
+	foreach my $taxon ( $taxa->@* ) {
+		my $output = $taxon->format( $format );
+		next unless length $output;
+		$self->cli->ebird->io->output( $output );
 		}
 	}
 

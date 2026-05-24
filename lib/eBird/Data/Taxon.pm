@@ -21,7 +21,6 @@ These objects are created from the results of the API calls, and you typically
 don't need to create them yourselves:
 
 
-
 =head1 DESCRIPTION
 
 =head2 Categories
@@ -69,6 +68,13 @@ sub new_from_code ($class, $species_code) {
 =item * banding_codes
 
 Returns the banding code.
+
+=cut
+
+sub banding_codes ($self) {
+	my @codes = $self->{'banding_codes'} =~ m/(\S+)/g;
+	\@codes;
+	}
 
 =item * category
 
@@ -215,7 +221,7 @@ taxa even if the names change.
 
 =head2 Stuff
 
-These return true if the
+These return true if the data matches the query, and false otherwise.
 
 =over 4
 
@@ -301,6 +307,18 @@ This does not change the existing object but returns a new one.
 
 =over 4
 
+=item * format( FORMAT )
+
+Returns a string representing the object formatted according to the
+sprintf-style C<FORMAT>. See L</Formatting>.
+
+=cut
+
+sub format ($self, $format) {
+	state $formatter = $self->_make_formatter;
+	$formatter->sprintf( $format, $self );
+	}
+
 =item * inflate
 
 =cut
@@ -330,6 +348,75 @@ sub is_inflated ($self) {
 	}
 
 =back
+
+=head2 Formatting
+
+=cut
+
+sub _make_formatter ($self) {
+	state $rc = require String::Sprintf;
+	no warnings qw(numeric);
+	String::Sprintf->formatter(
+		'b' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, join ', ', $V->[0]->banding_codes->@*; },
+		'c' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->category },
+		'e' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct ? '*' : ' ' },
+		'E' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct_year },
+		'f' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_common_name },
+		'F' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_scientific_name },
+		'g' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->genus },
+		'n' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->common_name; },
+		'o' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->order },
+		'r' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->report_as },
+		'S' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->scientific_name },
+		's' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->species_code },
+		'u' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->subspecies },
+		't' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->taxon_order },
+		);
+	}
+
+=over 4
+
+=item * C<b> - banding code
+
+=item * C<c> - category
+
+=item * C<e> - extinct
+
+=item * C<E> - extinction year
+
+=item * C<f> - family common name
+
+=item * C<F> - family scientific name
+
+=item * C<n> - common name
+
+=item * C<o> - scientific order
+
+=item * C<r> - report as
+
+=item * C<S> - scientific name codes
+
+=item * C<s> - species code
+
+	bless( {
+	  "banding_codes" => "CIBS",
+	  "category" => "species",
+	  "com_name_codes" => "CBSA",
+	  "common_name" => "Cinnamon-bellied Saltator",
+	  "extinct" => "",
+	  "extinct_year" => "",
+	  "family_com_name" => "Tanagers and Allies",
+	  "family_sci_name" => "Thraupidae",
+	  "order" => "Passeriformes",
+	  "report_as" => "",
+	  "sci_name_codes" => "SAGR",
+	  "scientific_name" => "Saltator grandis",
+	  "species_code" => "grasal2",
+	  "taxon_order" => "35806.0"
+	}, 'eBird::Data::Taxon' )
+
+=back
+
 
 =head1 SEE ALSO
 
