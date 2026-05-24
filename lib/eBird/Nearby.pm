@@ -85,14 +85,6 @@ Returns the internal L<eBird> object.
 
 sub ebird ($self) { $self->{'ebird'} }
 
-=item * latlong
-
-Returns the internal L<eBird::LatLong> object.
-
-=cut
-
-sub latlong ($self) { $self->{'latlong'} }
-
 =item * historic_observations( ANY_DATE )
 
 =cut
@@ -108,6 +100,14 @@ sub historic_observations ($self, $any_date) {
 sub hotspots ($self) {
 
 	}
+
+=item * latlong
+
+Returns the internal L<eBird::LatLong> object.
+
+=cut
+
+sub latlong ($self) { $self->{'latlong'} }
 
 =item * species_observation( SPECIES )
 
@@ -141,13 +141,13 @@ This isn't something that the eBird API supplies directly, so we guess a little
 by looking for
 
 =cut
+sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
 
 sub region ($self) {
 	my $dist = 32;
 
 	my $data = $self->ebird->hotspot->nearby( $self->latlong, { dist => $dist });
-	my %d =
-		map  { $_->parent->code, $_ }
+	my @d =
 		grep { $_->contains($self->latlong) }
 		map  { $self->ebird->region->info( $_->parent->code ) }
 		map  { $self->ebird->region->info( $_->[0]->location_id  ) }
@@ -155,7 +155,7 @@ sub region ($self) {
 		map  { [ $_, $self->latlong->distance_to($_) ] }
 		$data->@*;
 
-	\%d;
+	$d[0];
 	}
 
 =back

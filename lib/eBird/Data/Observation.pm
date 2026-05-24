@@ -17,6 +17,12 @@ eBird::Data::Observation - the representation of a single species observation
 
 =over 4
 
+=item * checklist_id
+
+=cut
+
+sub checklist_id ($self) { $self->subId }
+
 =item * count
 
 =cut
@@ -29,17 +35,206 @@ sub count ($self) { $self->howManyStr }
 
 sub date ($self) { $self->obsDt }
 
+=item * elevation
+
+This is not part of the eBird observation data, but
+=cut
+
+sub elevation ($self) {
+	unless( defined $self->{'geo'} ) {
+		$self->{'geo'} = eBird::Data::Geo->new($self);
+		}
+	return unless $self->{'geo'};
+	return $self->{'geo'}->elevation;
+	}
+
+=item * geo_coordinates
+
+Returns the latitude, longitude, and elevation as a list
+
+=cut
+
+sub geo_coordinates ($self) {
+	( $self->latitude, $self->longitude )
+	}
+
 =item * id
 
 =cut
 
 sub id ($self) { $self->obsId }
 
+=item * latitude
+
+=cut
+
+sub latitude ($self) { $self->lat }
+
+=item * location_id
+
+=cut
+
+sub location_id ($self) { $self->locId }
+
+=item * location
+
+=cut
+
+sub location ($self) { $self->locId }
+
+=item * longitude
+
+=cut
+
+sub longitude ($self) { $self->lng }
+
+=item * scientific name
+
+=cut
+
+sub scientific_name ($self) { $self->sciName }
+
 =item * species_code
 
 =cut
 
 sub species_code ($self) { $self->speciesCode }
+
+=item * taxon
+
+Returns an L<eBird::Data::Taxon> object constructed from C<species_code>.
+
+=cut
+
+sub taxon ($self) {
+	eBird::Data::Taxon->new_from_code( $self->species_code );
+	}
+
+=back
+
+=head2 Queries
+
+=over 4
+
+=item * is_private
+
+=cut
+
+sub is_private ($self) { $self->locationPrivate ? 1 : 0 }
+
+=item * is_valid
+
+=cut
+
+sub is_valid ($self) { $self->obsValid ? 1 : 0 }
+
+
+=back
+
+=head2 KML
+
+=over 4
+
+=item * kml_placemark
+
+=cut
+
+sub kml_placemark ($self) {
+	state $template = <<~'KML'
+		<Placemark>
+			<name>%s</name>
+			<description><![CDATA[%s]]</description>
+			<Point>
+				<coordinates>%d,%d,%d</coordinates>
+			</Point>
+		</Placemark>
+		KML
+
+	my $description = <<~"DESC";
+		This is the description
+		DESC
+
+	my @args = (
+		join( ' ', $self->yyyymmdd, $self-> ),
+		$description,
+		$self->longitude,
+		$self->latitude,
+		$self->elevation,
+		);
+
+	sprintf $template,
+	}
+
+
+=cut
+
+=head2 Formatting
+
+=cut
+
+sub _make_formatter ($self) {
+	state $rc = require String::Sprintf;
+	no warnings qw(numeric);
+	String::Sprintf->formatter(
+		'b' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, join ', ', $V->[0]->banding_codes->@*; },
+		'c' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->category },
+		'e' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct ? '*' : ' ' },
+		'E' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->extinct_year },
+		'f' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_common_name },
+		'F' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->family_scientific_name },
+		'g' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->genus },
+		'n' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->common_name; },
+		'o' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->order },
+		'r' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->report_as },
+		'S' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->scientific_name },
+		's' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->species_code },
+		'u' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->subspecies },
+		't' => sub ($w, $v, $V, $l) { sprintf '%*s', $w, $V->[0]->taxon_order },
+		);
+	}
+
+=over 4
+
+=item * C<d> - date
+
+=item * C<g> - latitude,longitude
+
+=item * C<c> - Sub ID (checklist ID)
+
+=item * C<l> - location name
+
+=item * C<L> - location ID
+
+=item * C<n> - common name
+
+=item * C<N> - count
+
+=item * C<p> - private
+
+=item * C<r> - reviewed
+
+=item * C<S> - scientific name
+
+=item * C<s> - species code
+
+=item * C<v> - valid  (C<*> if true, or C< > (space) if false)
+
+    "howMany" => 1,
+    "comName" => "Hermit Thrush",
+    "obsDt" => "2026-05-22 16:54",
+    "locationPrivate" => $VAR1->[0]{"obsValid"},
+    "obsValid" => $VAR1->[0]{"obsValid"},
+    "sciName" => "Catharus guttatus",
+    "speciesCode" => "herthr",
+    "locId" => "L20689490",
+
+    "lat" => "42.8381386",
+    "lng" => "-72.7107023",
+    "locName" => "South Pond Loop, Marlboro, Vermont, US (42.838, -72.711)",
+
+  bless( {
+    "subId" => "S344183457"
+  }, 'eBird::Data::Observation' ),
 
 =back
 

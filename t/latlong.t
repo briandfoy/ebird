@@ -37,7 +37,7 @@ geocoordinates module.
 
 subtest sanity => sub {
 	use_ok $class;
-	can_ok $class, $method, qw(lat long new_from_any);
+	can_ok $class, $method, qw(lat latitude long longitude new_from_any);
 	} or do {
 		done_testing();
 		exit 1;
@@ -103,6 +103,9 @@ subtest $method => sub {
 				can_ok $obj, qw(lat long);
 				is $obj->lat,  sprintf('%.2f', $args->[0]), 'latitude round trips';
 				is $obj->long, sprintf('%.2f', $args->[1]), 'longitude round trips';
+
+				is $obj->lat,  $obj->latitude,  'lat and latitude is the same';
+				is $obj->long, $obj->longitude, 'lon and longitude is the same';
 				};
 			}
 		};
@@ -121,6 +124,42 @@ subtest 'new_from_any' => sub {
 		is $any->lat,  $obj->lat,  'latitudes match';
 		is $any->long, $obj->long, 'longitude match';
 		}
+	};
+
+subtest 'elevation' => sub {
+	pass(); return;
+	subtest 'sitka' => sub {
+		my $longitude          = '-135.33';
+		my $latitude           =   '57.05';
+		my $expected_elevation =   '10';
+
+		my $obj = $class->$method( $latitude, $longitude );
+		isa_ok $obj, $class;
+
+		is $obj->latitude,  $latitude,  'latitude matches';
+		is $obj->longitude, $longitude, 'longitude matches';
+
+		my $elevation = $obj->elevation;
+		is $elevation, $expected_elevation, 'elevation for Sitka is right';
+		};
+	};
+
+subtest 'region' => sub {
+	my $expected_region = 'US-AK-220';
+
+	subtest 'sitka' => sub {
+		my $longitude          = '-135.33';
+		my $latitude           =   '57.05';
+
+		my $latlong = $class->$method( $latitude, $longitude );
+		isa_ok $latlong, $class;
+		can_ok $latlong, qw(region_info);
+
+		my $region_info = $latlong->region_info;
+
+		is $region_info->region,  $expected_region,  'region matches';
+		ok $region_info->region->contains($latlong),  'region contains geo-coordinate';
+		};
 	};
 
 done_testing();

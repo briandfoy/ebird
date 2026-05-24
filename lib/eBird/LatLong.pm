@@ -6,10 +6,12 @@ package eBird::LatLong;
 use namespace::autoclean;
 use Carp qw(croak);
 use List::Util qw(first);
+use Mojo::URL;
 use Scalar::Util qw(blessed looks_like_number);
 
 use eBird;
 use eBird::IO;
+use eBird::Nearby;
 
 =encoding utf8
 
@@ -119,23 +121,88 @@ sub distance_to ($self, $any ) {
 		);
 	}
 
+=item * ebird
+
+Returns the internal L<eBird> object.
+
+=cut
+
+sub ebird ($self) { $self->{'ebird'} }
+
+=item * elevation
+
+=cut
+
+sub elevation ($self) {
+	state $url = Mojo::URL->new('https://api.opentopodata.org/v1/srtm90m');
+	return $self->{'elevation'} if defined $self->{'elevation'};
+
+	my $config = $self->ebird->config;
+#	return unless $config->elevation_enabled;
+
+	my $query = {
+		locations => join ',', map { $self->$_() } qw(latitude longitude),
+		};
+
+	my $tx = $self->ebird->ua->get($url => form => $query);
+
+	my $json = $tx->res->json;
+	$self->{'elevation'} = eval { $json->{'results'}[0]{'elevation'} };
+
+	return $self->{'elevation'};
+	}
+
 =item * lat
+
+=item * latitude
 
 Returns the decimal latitude to two decimal places.
 
 =cut
 
-sub lat ($self) { $self->{'lat'} }
+sub latitude ($self) { $self->{'lat'} }
+*lat = \&latitude;
 
 =item * lng
 
+=item * lon
+
 =item * long
+
+=item * longitude
 
 Returns the decimal longitude to two decimal places.
 
 =cut
 
-sub long ($self) { $self->{'long'} }
+sub longitude ($self) { $self->{'long'} }
+*lon  = \&longitude;
+*long = \&longitude;
+*lng  = \&longitude;
+
+=item * region
+
+=cut
+sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
+
+sub region_info ($self) {
+	eBird::Nearby->new( $self, $self->ebird )->region;
+	}
+
+=item * time_zone_offset
+
+=cut
+
+sub time_zone_offset ($self) {
+	state $url = Mojo::URL->new('http://api.geonames.org/timezoneJSON');
+	my $query = {
+		lat      => $self->latitude,
+		lon      => $self->longitude,
+		username =>
+		};
+
+
+	}
 
 =back
 
