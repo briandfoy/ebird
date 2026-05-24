@@ -233,7 +233,7 @@ sub get ( $self, %args ) {
 	if( defined $args{'cache_key'} and $self->cache->exists($args{'cache_key'}) ) {
 		$self->logger->debug( 'get: cache hit for ' . $args{'cache_key'} );
 		$data = $self->cache->load( $args{'cache_key'} );
-		$self->logger->debug( 'get: cache hit for ' . $args{'cache_key'} , ' has length ' . length $data );
+		$self->logger->debug( 'get: cache hit for <' . $args{'cache_key'} . '> has length ' . length $data );
 
 		$data = decode_json($data) if( defined $data and $args{'json'} );
 		$self->cache->remove( $args{'cache_key'} ) unless defined $data;
@@ -244,6 +244,7 @@ sub get ( $self, %args ) {
 	unless( defined $data and 0 < length $data ) {
 		my $path_segment = $self->expand_path_template( @args{qw(path_template args)} );
 		my $url = $base->clone->path($path_segment);
+		$self->logger->debug( "URL: <$url>" );
 		$url->query($args{'query'}) if defined $args{'query'};
 
 		my $tx = $self->ua->get( $url );
@@ -308,7 +309,6 @@ sub locale ($self) { $self->config->general->locale };
 =cut
 
 sub logger ( $self ) { $self->{logger} //= Mojo::Log->new }
-
 
 =item * ua
 
