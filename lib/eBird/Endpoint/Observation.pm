@@ -292,8 +292,8 @@ sub recent_species_in_region ($self, $region, $species) {
 
 	$self->ebird->get(
 		args => {
-			regionCode  => $region->code,
-			speciesCode => $species->code,
+			regionCode  => ref $region  ? $region->code : $region,
+			speciesCode => ref $species ? $species->code : $species,
 			},
 		bless_into    => 'eBird::Data::Observation',
 		path_template => $path_template,
