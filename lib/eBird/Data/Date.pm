@@ -38,15 +38,15 @@ Parse a date as used in eBird and return its components as a hash.
 =cut
 
 sub parse ($class, $date) {
-	my( $year, $month, $date, $hour, $minute ) =
+	my( $year, $month, $day, $hour, $minute ) =
 		$date =~ m/\A(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\z/;
 	return unless $year;
 
 	return {
-		year  => $year,
-		month => $month,
-		date  => $date,
-		hour  => $hour,
+		year   => $year,
+		month  => $month,
+		date   => $day,
+		hour   => $hour,
 		minute => $minute,
 		};
 	}
