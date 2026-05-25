@@ -6,7 +6,6 @@ package eBird::Command::db;
 use parent qw(eBird::Command);
 
 use namespace::autoclean;
-use Mojo::Util qw(dumper);
 
 use eBird::SQLite;
 use eBird::Util qw(:all);

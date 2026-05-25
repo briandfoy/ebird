@@ -6,7 +6,6 @@ package eBird::Command::species;
 use parent qw(eBird::Command);
 
 use namespace::autoclean;
-use Mojo::Util qw(dumper);
 use String::Sprintf;
 
 use eBird::Util qw(:all);

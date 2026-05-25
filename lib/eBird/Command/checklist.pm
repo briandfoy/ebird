@@ -6,7 +6,6 @@ package eBird::Command::checklist;
 use parent qw(eBird::Command);
 
 use namespace::autoclean;
-use Mojo::Util qw(dumper);
 
 use eBird::Util qw(:all);
 

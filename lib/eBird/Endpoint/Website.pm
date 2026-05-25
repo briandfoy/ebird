@@ -14,7 +14,7 @@ use eBird::Util qw();
 
 use Mojo::DOM;
 use Mojo::JSON qw(decode_json encode_json);
-use Mojo::Util qw(decode dumper);
+use Mojo::Util qw(decode);
 use Time::Moment;
 
 use eBird::Util qw(:all);

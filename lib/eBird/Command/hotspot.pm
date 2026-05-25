@@ -8,8 +8,6 @@ use parent qw(eBird::Command);
 use namespace::autoclean;
 use eBird::Util qw(:all);
 
-use Mojo::Util qw(dumper);
-
 =encoding utf8
 
 =head1 NAME

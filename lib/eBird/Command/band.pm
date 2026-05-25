@@ -5,8 +5,6 @@ no feature qw(module_true);
 package eBird::Command::band;
 use parent qw(eBird::Command);
 
-use Mojo::Util qw(dumper);
-
 use eBird::Taxonomy;
 use eBird::Util qw(:all);
 
