@@ -141,7 +141,6 @@ This isn't something that the eBird API supplies directly, so we guess a little
 by looking for
 
 =cut
-sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
 
 sub region ($self) {
 	my $dist = 32;

@@ -86,6 +86,20 @@ sub day_in_range :Export ($year, $month, $day) {
 	1 <= $day <= $max and int($day) == $day;
 	}
 
+=item * dumper( REF )
+
+=cut
+
+sub dumper :Export {
+	state $rc = require Data::Dumper;
+	Data::Dumper->new([@_])
+		->Indent(1)
+		->Sortkeys(1)
+		->Terse(1)
+		->Useqq(1)
+		->Dump
+	}
+
 =item * geo_to_timezone( LATITUDE, LONGITUDE [, EPOCH_TIME] )
 
 =cut

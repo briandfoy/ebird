@@ -180,10 +180,9 @@ sub longitude ($self) { $self->{'long'} }
 *long = \&longitude;
 *lng  = \&longitude;
 
-=item * region
+=item * region_info
 
 =cut
-sub dumper { state $rc = require Data::Dumper; Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Useqq(1)->Dump }
 
 sub region_info ($self) {
 	eBird::Nearby->new( $self, $self->ebird )->region;
@@ -198,10 +197,8 @@ sub time_zone_offset ($self) {
 	my $query = {
 		lat      => $self->latitude,
 		lon      => $self->longitude,
-		username =>
+		username => ''
 		};
-
-
 	}
 
 =back
