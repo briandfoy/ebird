@@ -90,7 +90,7 @@ sub location_name ($self) { $self->locName }
 
 sub longitude ($self) { $self->lng }
 
-=item * scientific name
+=item * scientific_name
 
 =cut
 
@@ -184,8 +184,7 @@ sub kml_placemark ($self) {
 	sprintf $template, @args;
 	}
 
-
-=cut
+=back
 
 =head2 Formatting
 

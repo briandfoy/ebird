@@ -31,6 +31,12 @@ sub new ($class, $date) {
 	bless $hash, $class;
 	}
 
+=item * parse
+
+Parse a date as used in eBird and return its components as a hash.
+
+=cut
+
 sub parse ($class, $date) {
 	my( $year, $month, $date, $hour, $minute ) =
 		$date =~ m/\A(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\z/;
