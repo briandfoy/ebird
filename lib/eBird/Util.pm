@@ -76,9 +76,9 @@ Returns true if DAY is a valid date for MONTH in YEAR.
 
 sub day_in_range :Export ($year, $month, $day) {
 	my $tm = Time::Moment->new(
-		year => $year,
+		year  => $year,
 		month => $month,
-		day  => 1,
+		day   => 1,
 		);
 
 	my $max = $tm->at_last_day_of_month->day_of_month;
