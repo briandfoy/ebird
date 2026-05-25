@@ -158,7 +158,7 @@ subtest 'region' => sub {
 		my $region_info = $latlong->region_info;
 
 		is $region_info->region,  $expected_region,  'region matches';
-		ok $region_info->region->contains($latlong),  'region contains geo-coordinate';
+		ok $region_info->contains($latlong),  'region contains geo-coordinate';
 		};
 	};
 
