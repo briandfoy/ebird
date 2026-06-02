@@ -33,6 +33,9 @@ defined parts and joins them with a dash, C<->, to form the region
 string. For the United States, New York, you have C<US-NY>. For the
 Albany area, you have C<US-NY-001>.
 
+A Location is also treated as a region, and its info responses are in the
+Region section of the API. As such, there's a C<Location> type.
+
 =head2 Constructors
 
 =over 4
@@ -127,6 +130,7 @@ Return false, except in L<eBird::RegionType::World> which overrides it to be tru
 
 sub is_country        { 0 }
 sub is_in_name        { 1 }
+sub is_location       { 0 }
 sub is_null           { 0 }
 sub is_subnational1   { 0 }
 sub is_subnational2   { 0 }
@@ -166,6 +170,10 @@ although these are not inherited by any of its subclasses.
 
 Returns L<eBird::RegionType::Country>.
 
+=item * new_location_type
+
+Returns L<eBird::RegionType::Location>.
+
 =item * new_null_type
 
 Returns L<eBird::RegionType::Null>.
@@ -185,13 +193,14 @@ Returns L<eBird::RegionType::World>.
 =cut
 
 sub new_country_type      ($class) { $class->_new_type('Country')      }
+sub new_location_type     ($class) { $class->_new_type('Location')     }
 sub new_null_type         ($class) { $class->_new_type('Null')         }
 sub new_subnational1_type ($class) { $class->_new_type('Subnational1') }
 sub new_subnational2_type ($class) { $class->_new_type('Subnational2') }
 sub new_world_type        ($class) { $class->_new_type('World')        }
 
 BEGIN {
-	sub region_types { return qw(World Country Subnational1 Subnational2 Null) }
+	sub region_types { return qw(World Country Subnational1 Subnational2 Location Null) }
 	foreach my $r ( __PACKAGE__->region_types ) {
 		my $class = join '::', __PACKAGE__, $r;
 		eval "require $class";

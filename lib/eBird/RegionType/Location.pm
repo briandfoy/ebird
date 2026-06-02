@@ -2,14 +2,14 @@ use v5.38;
 use utf8;
 no feature qw(module_true);
 
-package eBird::RegionType::Subnational2;
+package eBird::RegionType::Location;
 use parent qw(eBird::RegionType);
 
 =encoding utf8
 
 =head1 NAME
 
-eBird::RegionType::Subnational2 - represents the bottom of the region tree, typically a city
+eBird::RegionType::Location - represents the bottom of the region tree, typically a city
 
 =head1 SYNOPSIS
 
@@ -17,11 +17,11 @@ You shouldn't need this class at the application level.
 
 	use eBird::RegionType;
 
-	my $region_type = eBird::RegionType->new_subnational2_type;
+	my $region_type = eBird::RegionType->new_location_type;
 
 To test a region type:
 
-	if( $region_type->is_subnational2 ) { ... }
+	if( $region_type->is_location ) { ... }
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ does not know about particular countries.
 
 =head2 Methods
 
-These inherit all the methods from L<eBird::RegionType> and overrides the
+These inherit all the methods from L<eBird::RegionType> and override the
 ones specific for Subnational2.
 
 =over 4
@@ -42,17 +42,18 @@ Returns true always.
 
 =item * parent_region_type
 
-Returns L<eBird::RegionType::Subnational1>.
+Returns the empty list, since it may actually be L<eBird::RegionType::Subnational1>
+or L<eBird::RegionType::Subnational2>.
 
 =item * sub_region_type
 
-Returns L<eBird::RegionType::Location>.
+Returns L<eBird::RegionType::Null>. There is no lower division.
 
 =cut
 
-sub is_subnational2    { 1 }
-sub parent_region_type { 'eBird::RegionType::Subnational1' };
-sub sub_region_type    { 'eBird::RegionType::Location' };
+sub is_location        { 0 }
+sub parent_region_type { () };
+sub sub_region_type    { 'eBird::RegionType::Null' };
 
 =back
 
