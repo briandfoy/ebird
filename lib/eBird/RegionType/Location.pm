@@ -36,7 +36,7 @@ ones specific for Subnational2.
 
 =over 4
 
-=item * is_subnational2
+=item * is_location
 
 Returns true always.
 
@@ -51,7 +51,7 @@ Returns L<eBird::RegionType::Null>. There is no lower division.
 
 =cut
 
-sub is_location        { 0 }
+sub is_location        { 1 }
 sub parent_region_type { () };
 sub sub_region_type    { 'eBird::RegionType::Null' };
 

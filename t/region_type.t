@@ -46,7 +46,7 @@ subtest 'region types' => sub {
 	my $method = 'region_types';
 	can_ok $class, $method;
 	my @types = $class->$method();
-	is scalar @types, 5, q(the count of type is right);
+	is scalar @types, 6, q(the count of type is right);
 	};
 
 subtest 'new' => sub {
@@ -84,6 +84,7 @@ subtest 'identity' => sub {
 		is_country
 		is_subnational1
 		is_subnational2
+		is_location
 		is_null
 		is_type
 		is_in_name
@@ -127,7 +128,7 @@ subtest 'identity' => sub {
 			subtest "has subregions" => sub {
 				my $method = 'has_sub_region';
 				my $answer = 1;
-				$answer = 0 if $region =~ /Null|2/i;
+				$answer = 0 if $region =~ /Null|Location/i;
 				can_ok $obj, $method;
 				is $obj->$method(), $answer, 'region has subregions'
 				};
