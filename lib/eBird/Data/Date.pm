@@ -5,7 +5,10 @@ no feature qw(module_true);
 package eBird::Data::Date;
 use parent qw(eBird::Data::Base);
 
+use Time::Moment;
+
 use eBird;
+use eBird::LatLong;
 
 =encoding utf8
 
@@ -25,10 +28,16 @@ These objects represent the information eBird tracks about a region.
 
 =cut
 
-sub new ($class, $date) {
+sub new ($class, $date, $latlong = undef ) {
 	my $hash = $class->parse($date);
 
-	bless $hash, $class;
+	$hash->{'time_moment'} = Time::Moment->new( $hash->%{qw(year month day hour minute)} );
+
+	my $self = bless $hash, $class;
+
+	$self->add_timezone($latlong) if $latlong;
+
+	return $self;
 	}
 
 =item * parse
@@ -45,11 +54,79 @@ sub parse ($class, $date) {
 	return {
 		year   => $year,
 		month  => $month,
-		date   => $day,
+		day    => $day,
 		hour   => $hour,
 		minute => $minute,
 		};
 	}
+
+sub _now_at_midnight ($self) { Time::Moment->now->at_midnight }
+
+=back
+
+=head2 Instance methods
+
+=over 4
+
+=item * add_timezone( LATLONG )
+
+=cut
+
+my %IANA_TO_ZONE;
+
+sub add_timezone ($self, $latlong) {
+	state $rc = require Geo::Location::TimeZoneFinder;
+	state $rc2 = require DateTime::TimeZone;
+	state $finder = do {
+		my $file_base = $self->ebird->cache->dir->dirname->child('timezones-1970')->child('combined-shapefile-1970');
+
+		Geo::Location::TimeZoneFinder->new( file_base => $file_base );
+		};
+
+	$self->{'latlong'} = $latlong;
+
+	my @iana_names = $finder->time_zones_at(
+		map { ( $_, $latlong->$_ ) } qw(latitude longitude)
+		);
+	$self->{'iana_timezone_name'} = $iana_names[0];
+
+	my $zone = $IANA_TO_ZONE{ $self->{'iana_timezone_name'} } //= DateTime::TimeZone->new(name => $self->{'iana_timezone_name'});
+
+	$self->{'time_moment'} = $self->{'time_moment'}->with_offset_same_instant(
+		$zone->offset_for_datetime($self->{'time_moment'}) / 60
+		);
+
+	return $self;
+	}
+
+=item * as_time_moment
+
+Return the object as a L<Time::Moment> object. This will lose some of the
+extra information.
+
+=cut
+
+sub as_time_moment ($self) { $self->{'time_moment'} }
+
+=item * days_ago
+
+=cut
+
+sub days_ago ($self) {
+	Time::Moment->now->delta_days( $self->as_time_moment );
+	}
+
+=item * iana_timezone_name
+
+=cut
+
+sub iana_timezone_name ($self) { $self->{'iana_timezone_name'} }
+
+=item * tz_offset
+
+=cut
+
+sub tz_offset ($self) { $self->{'time_moment'}->offset }
 
 =back
 
@@ -62,6 +139,16 @@ sub parse ($class, $date) {
 =item * is_this_month
 
 =item * is_this_year
+
+=cut
+
+sub is_this_week ($self) {
+
+	}
+
+sub is_this_year ($self) {
+
+	}
 
 =back
 
