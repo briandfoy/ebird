@@ -287,7 +287,7 @@ sppLocale           any available locale  en      Use this language for species 
 
 =cut
 
-sub recent_species_in_region ($self, $region, $species) {
+sub recent_species_in_region ($self, $region, $species, $back = 3) {
 	my $path_template = 'data/obs/{{regionCode}}/recent/{{speciesCode}}';
 
 	$self->ebird->get(
@@ -298,6 +298,10 @@ sub recent_species_in_region ($self, $region, $species) {
 		bless_into    => 'eBird::Data::Observation',
 		path_template => $path_template,
 		required      => [],
+		query         => {
+			back     => $back,
+			hotspots => 'true',
+			},
 		validate      => {},
 		);
 	}
