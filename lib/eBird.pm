@@ -274,13 +274,14 @@ sub get ( $self, %args ) {
 
 	if( $args{'bless_into'} ) {
 		eBird::Util::load_module($args{'bless_into'});
+
 		if( is_arrayref($data) and ref $data->[0] ) {
 			foreach my $hash ( $data->@* ) {
-				bless $hash, $args{'bless_into'};
+				$args{'bless_into'}->new_from_api_response($hash)
 				}
 			}
 		elsif( is_arrayref($data) or is_hashref($data) ) {
-			bless $data, $args{'bless_into'}
+			$args{'bless_into'}->new_from_api_response($data)
 			}
 		}
 

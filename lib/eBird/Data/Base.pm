@@ -41,13 +41,22 @@ sub can ($self, $method) {
 
 =item * ebird
 
-Return a quiet L<eBird> object. s
+Return a quiet L<eBird> object.
 
 =cut
 
 sub ebird {
 	state $rc = do { require eBird; require eBird::IO };
 	eBird->new( io => eBird::IO->new_quiet )
+	}
+
+
+=item * new_from_api_response
+
+=cut
+
+sub new_from_api_response ($class, $ref) {
+	bless $ref, $class;
 	}
 
 =back
