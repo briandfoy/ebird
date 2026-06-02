@@ -325,6 +325,7 @@ sub format ($self, $format) {
 
 sub inflate ($self, $ebird = eBird->new( io => eBird::IO->new_quiet )) {
 	return $self if $self->is_inflated;
+
 	my $taxon =
 		first
 		{ $_->species_code eq $self->species_code }
