@@ -93,10 +93,12 @@ sub default_dir ($class) { Mojo::File->new( eBird::Util::home_dir() )->child('.e
 
 sub new ($class, %args) {
 	state %defaults = (
-		api_base_url => 'https://api.ebird.org/v2',
-		cache        => eBird::Cache->new( dir => $class->default_cache_dir  ),
-		config       => eBird::Config->new( $class->default_config_file ),
-		io           => eBird::IO->new,
+		api_base_url     => 'https://api.ebird.org/v2',
+		cache            => eBird::Cache->new( dir => $class->default_cache_dir  ),
+		config           => eBird::Config->new( $class->default_config_file ),
+		io               => eBird::IO->new,
+		last_request     => time - 600,
+		request_interval => 1,
 		);
 	state %allowed = map { $_, 1 } qw(
 		api_base_url
@@ -105,6 +107,7 @@ sub new ($class, %args) {
 		io
 		locale
 		logger
+		request_interval
 		);
 
 	$args{'logger'} //= do {
@@ -113,10 +116,16 @@ sub new ($class, %args) {
 		Mojo::Log->new( path => $path, level => ($ENV{'EBIRD_LOG_LEVEL'} // 'warn') );
 		},
 
+	my @not_allowed = grep { ! exists $allowed{$_} } keys %args;
+	foreach my $extra ( @not_allowed ) {
+		$args{'logger'}->warn( "extra argument <$extra> to new" );
+		}
+
 	my $self = bless {
 		%defaults,
 		map { $_, $args{$_} } grep { $allowed{$_} } keys %args,
 		}, $class;
+
 
 	$self->add_endpoints;
 
@@ -231,7 +240,6 @@ sub get ( $self, %args ) {
 
 	# try it from the cache first
 	if( defined $args{'cache_key'} and $self->cache->exists($args{'cache_key'}) ) {
-		$self->logger->debug( 'get: cache hit for ' . $args{'cache_key'} );
 		$data = $self->cache->load( $args{'cache_key'} );
 		$self->logger->debug( 'get: cache hit for <' . $args{'cache_key'} . '> has length ' . length $data );
 
@@ -241,14 +249,27 @@ sub get ( $self, %args ) {
 
 	# did not get it from cache, so get it live. If data is empty, it was
 	# probably in the cache by mistake.
-	unless( defined $data and 0 < length $data ) {
+	if( defined $data and 0 < length $data ) {
+		$self->logger->trace( "Found cached data for <$args{'cache_key'}>" );
+		}
+	else {
+		$self->logger->trace( "Cache miss for <$args{'cache_key'}>" );
+
+		my $diff = $self->{'request_interval'} - ( time - $self->{'last_request'} );
+		$self->logger->trace( "request_interval <$self->{'request_interval'}> - diff <$diff>" );
+		if( $diff > 0 ) {
+			$self->logger->trace( "request_interval: sleeping for $diff");
+			sleep $diff + 1;
+			}
+
 		my $path_segment = $self->expand_path_template( @args{qw(path_template args)} );
 		my $url = $base->clone->path($path_segment);
 		$self->logger->debug( "URL: <$url>" );
 		$url->query($args{'query'}) if defined $args{'query'};
 
 		my $tx = $self->ua->get( $url );
-		unless( $tx->result->is_success ) {
+		$self->{'last_request'} = time;
+		unless( $tx->res->is_success ) {
 			$self->io->error(
 				sprintf "Could not fetch URL <%s>. Code: %s Response: %s",
 					$url,
@@ -339,7 +360,9 @@ sub _setup_ua ( $self ) {
 	$self->{'ua'} = Mojo::UserAgent->new;
 	$self->{'ua'}->cookie_jar($cookie_jar);
 
+	$self->{'ua'} = $self->{'ua'}->max_connections(0);
 	$self->{'ua'} = $self->{'ua'}->max_redirects(5);
+	$self->{'ua'} = $self->{'ua'}->connect_timeout(2);
 
 	$self->{'ua'}->on(
 		start => sub ($ua, $tx) {
