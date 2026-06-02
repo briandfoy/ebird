@@ -16,6 +16,7 @@ eBird::Endpoint::Region - handles the queries to ref/region
 =head1 DESCRITION
 
 =head2 Class
+
 =head2 Region
 
 =over 4
@@ -47,9 +48,9 @@ The major region, country, subnational1 or subnational2 code, or locId
 sub info ( $self, $region ) {
 	state $path_template = 'ref/region/info/{{region}}';
 
-	my $bless_into = do {
-		if( $region =~ /\AL/ ) { 'LocationInfo' }
-		else                   { 'RegionInfo'   }
+	my( $bless_into, $cache_key_prefix ) = do {
+		if( $region =~ /\A L \d+ \z/xa ) { ( 'Location',     'location-'      ) }
+		else                             { ( 'RegionInfo' ,  'region-info-'   ) }
 		};
 
 	$self->ebird->get(
@@ -57,7 +58,7 @@ sub info ( $self, $region ) {
 			region => $region,
 			},
 		bless_into    => 'eBird::Data::' . $bless_into,
-		cache_key     => 'region-info-' . $region,
+		cache_key     => $cache_key_prefix . $region,
 		path_template => $path_template,
 		);
 	}
@@ -82,7 +83,7 @@ sub subregion_list_for ( $self, $region_type, $parent_region_code ) {
 			parentRegionCode => $parent_region_code,
 			},
 		bless_into    => 'eBird::Data::Region',
-		cache_key     => join '-', 'subregion', 'list', $region_type, $parent_region_code,
+		cache_key     => join( '-', 'subregion', 'list', $region_type, $parent_region_code ),
 		path_template => $path_template,
 		);
 	}
