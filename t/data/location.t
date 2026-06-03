@@ -41,8 +41,8 @@ subtest 'new_from_id' => sub {
 		ok $location->region->is_region, 'parent is a region';
 		ok ! $location->region->is_location, 'parent is not a location';
 
-		ok   $location->contains( $expected{'inside'}  ), 'contains() returns true for inside point';
-		ok ! $location->contains( $expected{'outside'} ), 'contains() returns false for inside point';
+		ok   $location->latlong_box->contains( $expected{'inside'}  ), 'contains() returns true for inside point';
+		ok ! $location->latlong_box->contains( $expected{'outside'} ), 'contains() returns false for outside point';
 		};
 	};
 

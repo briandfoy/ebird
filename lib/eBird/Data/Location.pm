@@ -9,6 +9,7 @@ use namespace::autoclean;
 
 use eBird::Data::Region ();
 use eBird::LatLong ();
+use eBird::LatLongBox ();
 
 =encoding utf8
 
@@ -87,11 +88,11 @@ sub new_from_api_response ($class, $hash) {
 	return $Registry{ $hash->{'code'} } if defined $Registry{ $hash->{'code'} };
 	my $self = {};
 
-	$self->{'latlong'} = eBird::LatLong->new_from_decimal( $hash->@{qw(latitude longitude)} );
-	$self->{'name'}    = $hash->{'result'};
-	$self->{'id'}      = $hash->{'code'};
-	$self->{'bounds'}  = eBird::LatLongBox->new( $hash->{'bounds'} );
-	$self->{'parent'}  = eBird::Data::Region->new_from_api_response($hash->{'parent'});
+	$self->{'latlong'}      = eBird::LatLong->new_from_decimal( $hash->@{qw(latitude longitude)} );
+	$self->{'name'}         = $hash->{'result'};
+	$self->{'id'}           = $hash->{'code'};
+	$self->{'latlong_box'}  = eBird::LatLongBox->new_from_api_response( $hash );
+	$self->{'parent'}       = eBird::Data::Region->new_from_api_response($hash->{'parent'});
 
 	# need to look up hotspot (410 Gone if not)
 
@@ -118,6 +119,12 @@ sub new_from_id ($class, $id //= '') {
 =cut
 
 sub id ($self) { $self->{'id'} }
+
+=item * latlong_box
+
+=cut
+
+sub latlong_box ($self) { $self->{'latlong_box'} }
 
 =item * name
 
