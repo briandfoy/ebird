@@ -102,10 +102,14 @@ sub _kml_colors ($self) {
 	}
 
 sub action_kml ( $self, $species, $region ) {
+	state $colors = $self->_kml_colors;
+
 	state $kml_header = <<~"KML";
 		<?xml version="1.0" encoding="UTF-8"?>
 		<kml xmlns="http://www.opengis.net/kml/2.2">
 		<Document>
+
+		$colors
 		KML
 
 	state $kml_footer = <<~"KML";

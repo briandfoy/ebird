@@ -34,7 +34,11 @@ sub count ($self) { $self->howManyStr }
 
 =cut
 
-sub date ($self) { $self->obsDt }
+sub date ($self) {
+	return $self->{'date'} if defined $self->{'date'};
+
+	$self->obsDt
+	}
 
 =item * elevation
 
@@ -71,6 +75,18 @@ sub id ($self) { $self->obsId }
 =cut
 
 sub latitude ($self) { $self->lat }
+
+=item * location
+
+Returns the L<eBird::Data::LocationInfo> for the observation.
+
+=cut
+
+sub location ($self) {
+	return $self->{'location'} if ref $self->{'location'};
+
+	$self->{'location'} = eBird::Data::Location->new($self->location_id, $self->location_name)
+	}
 
 =item * location_id
 
@@ -147,6 +163,7 @@ sprintf-style C<FORMAT>. See L</Formatting>.
 sub format ($self, $format) {
 	state $formatter = $self->_make_formatter;
 	my $line = eval { $formatter->sprintf( $format, $self ) };
+	say STDERR "FORMAT: $@" if $@;
 	return $line;
 	}
 
@@ -160,10 +177,13 @@ sub format ($self, $format) {
 
 =cut
 
+# https://developers.google.com/kml/documentation/kmlreference
+
 sub kml_placemark ($self) {
 	state $template = <<~'KML';
 		<Placemark>
-			<name><![CDATA[%s]]></name>
+			<styleUrl>#%s</styleUrl>
+			<name></name>
 			<description><![CDATA[%s]]></description>
 			<Point>
 				<coordinates>%f,%f,%f</coordinates>
@@ -171,10 +191,35 @@ sub kml_placemark ($self) {
 		</Placemark>
 		KML
 
-	my $description = "This is the description";
+	my $description_format = <<~"HTML";
+		<div id="%s">
+			<h2>%s</h2>
+
+			<ul>
+				<li>%s</li>
+				<li>%s</li>
+				<li>%s</li>
+				<li>%s</li>
+			</ul>
+		</div>
+
+
+		HTML
+
+	my $days_ago = 1;
+	my $style = 'style-' . $days_ago;
+
+	my $description = sprintf $description_format,
+		$style,
+		$self->checklist_id,
+		$self->location_name,
+		$self->taxon->inflate->common_name,
+		$self->date,
+		sprintf( qq(<a href="https://ebird.org/checklist/%s">%s</a>), $self->checklist_id, $self->checklist_id ),
+		join( ", ", map { $self->$_ } qw(latitude longitude) );
+
 
 	my @args = (
-		join( ' ', $self->date, $self->location_name ),
 		$description,
 		$self->longitude,
 		$self->latitude,
