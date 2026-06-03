@@ -5,7 +5,12 @@ no feature qw(module_true);
 package eBird::Data::Region;
 use parent qw(eBird::Data::Base);
 
+use namespace::autoclean;
+use Scalar::Util qw(blessed);
+use Storable qw(dclone);
+
 use eBird;
+use eBird::RegionType;
 
 =encoding utf8
 
@@ -33,8 +38,21 @@ something at the subnational2 level (e.g. municipal division).
 
 =cut
 
+my %Registry;
+
 sub new_from_api_response ($class, $hash) {
-	bless $hash, $class;
+	return $Registry{ $hash->{'code'} } if defined $Registry{ $hash->{'code'} };
+	my $self = {};
+
+	$self->{'latlong'}      = eBird::LatLong->new_from_decimal( $hash->@{qw(latitude longitude)} );
+	$self->{'name'}         = $hash->{'result'};
+	$self->{'id'}           = $hash->{'code'};
+	$self->{'latlong_box'}  = eBird::LatLongBox->new_from_api_response( $hash );
+	$self->{'region'}       = $class->ebird->region->info($hash->{'parent'}{'code'}) if defined $hash->{'parent'};
+
+	$Registry{ $hash->{'code'} } = bless $self, $class;
+
+	return $Registry{ $hash->{'code'} };
 	}
 
 =item * new_from_id
@@ -42,7 +60,7 @@ sub new_from_api_response ($class, $hash) {
 =cut
 
 sub new_from_id ($class, $id) {
-	bless {}, $class;
+	my $self = $class->ebird->region->info($id);
 	}
 
 =back
@@ -59,9 +77,13 @@ Returns the adjacent regions for the region
 
 The short form of the region.
 
-=item * info
+=item * iana_timezone_name
 
-Returns the L<eBird::Data::RegionInfo> for this region.
+=cut
+
+sub iana_timezone_name ($self) {
+
+	}
 
 =item * label
 
@@ -79,15 +101,21 @@ sub adjacent_regions ($self) {
 	$self->ebird->geo->adjacent_regions($self->code);
 	}
 
-sub code  ($self) { $self->{'code'} }
-
-sub info ($self) {
-	$self->ebird->region->region_info_for($self->code);
-	}
+sub code  ($self) { $self->{'id'} }
 
 sub label ($self)  { $self->name }
 
-sub region ($self) { $self->code }
+sub region ($self) { $self->{'region'}  }
+
+=item * type
+
+Returns an L<eBird::RegionType> object.
+
+=cut
+
+sub type ($self) {
+	eBird::RegionType->new_for( $self->{'type'} );
+	}
 
 =back
 
