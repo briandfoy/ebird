@@ -301,8 +301,8 @@ sub get ( $self, %args ) {
 				$args{'bless_into'}->new_from_api_response($hash)
 				}
 			}
-		elsif( is_arrayref($data) or is_hashref($data) ) {
-			$args{'bless_into'}->new_from_api_response($data)
+		else {
+			$data = $args{'bless_into'}->new_from_api_response($data)
 			}
 		}
 
