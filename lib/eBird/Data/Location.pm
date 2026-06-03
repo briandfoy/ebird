@@ -85,7 +85,7 @@ sub new ($class, $id, $name) {
 =cut
 
 sub new_from_api_response ($class, $hash) {
-	return $Registry{ $hash->{'code'} } if defined $Registry{ $hash->{'code'} };
+	return $Registry{ $hash->{'code'} } if exists $Registry{ $hash->{'code'} };
 	my $self = {};
 
 	$self->{'latlong'}      = eBird::LatLong->new_from_decimal( $hash->@{qw(latitude longitude)} );
