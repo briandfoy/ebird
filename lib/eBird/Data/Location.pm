@@ -102,7 +102,7 @@ sub new_from_api_response ($class, $hash) {
 
 =cut
 
-sub new_from_id ($class, $id) {
+sub new_from_id ($class, $id //= '') {
 	return unless $id =~ m/\A L \d+ \z/ax;
 	$class->new_from_api_response( $class->ebird->region->info($id) );
 	}
