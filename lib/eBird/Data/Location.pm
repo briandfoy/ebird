@@ -179,6 +179,8 @@ Always returns false.
 
 sub is_region ($self) { 0 }
 
+=back
+
 =head1 SOURCE AVAILABILITY
 
 This source is in Github:
