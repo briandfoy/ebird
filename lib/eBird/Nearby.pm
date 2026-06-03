@@ -31,109 +31,9 @@ objects with different coordinates.
 
 =over 4
 
-=item * new( eBird::LatLong [, EBIRD] )
-
-Create a new instance with an L<eBird> and L<eBird::LatLong> objects.
-
-If you have geocoordinates from another source, you can use C<new_from_any> which
-will create the L<eBird::LatLong> for you.
-
-=cut
-
-sub new ($class, $latlong, $ebird = eBird->new( io => eBird::IO->new_quiet )) {
-	my @errors;
-	push @errors, 'First argument must be an eBird::LatLong object' unless $latlong isa 'eBird::LatLong';
-	push @errors, 'Second argument must be an eBird object' unless $ebird isa 'eBird';
-	if( @errors ) {
-		$ebird->io->carp( @errors );
-		return;
-		}
-
-	bless {
-		ebird   => $ebird,
-		latlong => $latlong,
-		}, $class;
-	}
-
-=item * new_from_any( ANY [, EBIRD] )
-
-Use any object that responds to the right methods
-
-The latitude methods are one of C<lat>, C<latitude>, or C<y>.
-
-The longitude methods are one of C<lon>, C<longitude>, C<lon>, or C<x>.
 
 
-=cut
-
-sub new_from_any ( $class, $any, $ebird = eBird->new( io => eBird::IO->new_quiet ) ) {
-	my $latlong = eBird::LatLong->new_from_any($any);
-	$class->new( $latlong, $ebird );
-	}
-
-=back
-
-=head2 Instance methods
-
-=over 4
-
-=item * ebird
-
-Returns the internal L<eBird> object.
-
-=cut
-
-sub ebird ($self) { $self->{'ebird'} }
-
-=item * historic_observations( ANY_DATE )
-
-=cut
-
-sub historic_observations ($self, $any_date) {
-
-	}
-
-=item * hotspots
-
-=cut
-
-sub hotspots ($self) {
-
-	}
-
-=item * latlong
-
-Returns the internal L<eBird::LatLong> object.
-
-=cut
-
-sub latlong ($self) { $self->{'latlong'} }
-
-=item * species_observation( SPECIES )
-
-=cut
-
-sub species_observation ($self, @species) {
-
-	}
-
-=item * recent_notable_observations
-
-=cut
-
-sub recent_notable_observations ($self) {
-
-	}
-
-=item * recent_observations
-
-=cut
-
-sub recent_observations ($self) {
-
-	}
-
-=item * region
+=item * closest(LATLONG)
 
 Returns the region for the L<eBird::Nearby> object.
 
@@ -142,17 +42,16 @@ by looking for
 
 =cut
 
-sub region ($self) {
-	my $dist = 32;
+sub closest ($class, $latlong, $dist = 32) {
+	my $ebird = eBird->new;
+	my $data = $ebird->hotspot->nearby( $latlong, { dist => $dist });
 
-	my $data = $self->ebird->hotspot->nearby( $self->latlong, { dist => $dist });
 	my @d =
-		grep { $_->contains($self->latlong) }
-		map  { $self->ebird->region->info( $_->parent->code ) }
-		map  { $self->ebird->region->info( $_->[0]->location_id  ) }
+		grep { $_->latlong_box->contains($latlong) }
+		map  { $ebird->region->info( $_->[0]->location_id  ) }
 		sort { $a->[1] <=> $b->[1] }
-		map  { [ $_, $self->latlong->distance_to($_) ] }
-		$data->@*;
+		map  { [ $_, $latlong->distance_to($_->latlong) ] }
+		$data->locations->@*;
 
 	$d[0];
 	}
