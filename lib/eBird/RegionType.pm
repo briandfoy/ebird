@@ -105,6 +105,10 @@ Return false, except in L<eBird::RegionType::Country> which overrides it to be t
 
 Return true, except in L<eBird::RegionType::> which overrides it to be true.
 
+=item * is_location
+
+Return false, except in L<eBird::RegionType::Location> which overrides it to be true.
+
 =item * is_null
 
 Return false, except in L<eBird::RegionType::Null> which overrides it to be true.
