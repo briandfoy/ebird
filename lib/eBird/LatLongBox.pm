@@ -41,7 +41,6 @@ sub new ($class, $latlong1, $latlong2) {
 	state $arg_class = 'eBird::LatLong';
 	unless( $latlong1 isa $arg_class and $latlong2 isa $arg_class ) {
 		carp "Both arguments to new must be $arg_class objects";
-#		say "NEW: " . eBird::Util::dumper( [$latlong1, $latlong2] );
 		return;
 		}
 
