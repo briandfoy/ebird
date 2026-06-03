@@ -18,12 +18,11 @@ eBird::Command::recent - show recent sightings of a species in a region
 
 List results for recent sightings of a species in a region:
 
-	% ebird recent REGION SPECIES
+	% ebird recent SPECIES REGION
 
 For a Hermit Thrush in Vermont:
 
-	% ebird recent US-VT CAGU
-
+	% ebird recent CAGU US-VT
 
 =head1 DESCRIPTION
 
@@ -71,6 +70,36 @@ sub fallthrough_action ( $self ) { 'fallthrough' }
 =item * action_kml( SPECIES_CODE, REGION_CODE )
 
 =cut
+
+sub _kml_colors ($self) {
+	state @colors = qw(
+		ff0000ff
+		ff0080ff
+		ff00ffff
+		ff00ff00
+		ffff0000
+		ff800000
+		ffff0080
+		);
+
+	state $colors = do {
+		my $t = <<~"HTML";
+		  <Style id="style-%s">
+			<IconStyle>
+				<color>%s</color>
+				<scale>1.2</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
+				</Icon>
+			</IconStyle>
+			</Style>
+		HTML
+
+		join "\n\n", map { sprintf $t, $_, $colors[$_] } 0 .. $#colors;
+		};
+
+	return $colors;
+	}
 
 sub action_kml ( $self, $species, $region ) {
 	state $kml_header = <<~"KML";
