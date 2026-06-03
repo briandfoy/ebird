@@ -3,8 +3,13 @@ basic.t
 util.t
 config.t
 latlong.t
+latlongbox.t
 expand_path_template.t
 region_type.t
+
+data/date.t
+data/location.t
+data/region.t
 
 commands/band.t
 commands/cache.t
