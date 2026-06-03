@@ -30,13 +30,15 @@ subtest 'new_from_id' => sub {
 		my $location = $class->new_from_id( $expected{'id'} );
 		isa_ok $location, $class;
 		ok $location->is_location, 'Location is a location';
-		ok ! $location->is_region, 'Locaiton is not a region';
+		ok ! $location->is_region, 'Locaton is not a region';
 
 		is $location->id, $expected{'id'}, 'ID round trips';
 		is $location->name, $expected{'name'}, 'location name is correct';
 
-		ok $location->parent->is_region, 'parent is a region';
-		ok ! $location->parent->is_location, 'parent is not a location';
+		can_ok $location, qw(region);
+		isa_ok $location->region, 'eBird::Data::Region';
+		ok $location->region->is_region, 'parent is a region';
+		ok ! $location->region->is_location, 'parent is not a location';
 
 		ok $location->region->is_region, 'parent is a region';
 		ok ! $location->region->is_location, 'parent is not a location';

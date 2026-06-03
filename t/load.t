@@ -1,5 +1,5 @@
 use v5.10;
-use lib qw(blib/lib);
+use lib qw(lib blib/lib);
 
 use Mojo::File;
 

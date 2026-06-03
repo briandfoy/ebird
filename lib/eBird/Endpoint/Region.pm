@@ -49,8 +49,8 @@ sub info ( $self, $region ) {
 	state $path_template = 'ref/region/info/{{region}}';
 
 	my( $bless_into, $cache_key_prefix ) = do {
-		if( $region =~ /\A L \d+ \z/xa ) { ( 'Location',     'location-'      ) }
-		else                             { ( 'RegionInfo' ,  'region-info-'   ) }
+		if( $region =~ /\A L \d+ \z/xa ) { ( 'Location', 'location-'    ) }
+		else                             { ( 'Region' ,  'region-info-' ) }
 		};
 
 	$self->ebird->get(

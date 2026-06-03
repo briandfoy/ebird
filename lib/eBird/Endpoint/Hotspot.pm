@@ -6,7 +6,8 @@ package  eBird::Endpoint::Hotspot;
 use parent qw(eBird::Endpoint::Base);
 
 use namespace::autoclean;
-use eBird::Util qw(parse_csv);
+
+use eBird::Data::Nearby;
 
 =encoding utf8
 
@@ -76,7 +77,7 @@ sub info ( $self, $location_id ) {
 		args => {
 			locId => $location_id,
 			},
-		bless_into => 'eBird::Data::Location',
+		bless_into => 'eBird::Data::Hotspot',
 		cache_key => "hotspot-$location_id",
 		path_template => $path_template,
 		);
@@ -99,21 +100,6 @@ lng   -180 - 180       Required. Longitude to 2 decimal places.
 
 =cut
 
-=item * parse_location_csv
-
-=cut
-
-sub parse_location_csv ( $self, $csv_data ) {
-	state $headers = [
-		qw(
-			locId country subnational1 subnational2 latitude longitude
-			location_name last_observation all_time_species
-		)
-		];
-
-	parse_csv( $csv_data, $headers, 'eBird::Data::Location' );
-	}
-
 sub nearby ($self, $latlong, $args) {
 	state $path_template = 'ref/hotspot/geo';
 
@@ -121,7 +107,7 @@ sub nearby ($self, $latlong, $args) {
 
 	my $data = $self->ebird->get(
 		args => {},
-		bless_into => 'eBird::Data::Location',
+		bless_into => 'eBird::Data::Nearby',
 		cache_key  => sprintf("nearby-%s^%s-%s", $latlong->lat, $latlong->long, $args->{'distance'}),
 		json => 0,
 		path_template => $path_template,
@@ -132,8 +118,6 @@ sub nearby ($self, $latlong, $args) {
 			fmt  => 'csv',
 			},
 		);
-
-	$self->parse_location_csv($data);
 	}
 
 =back

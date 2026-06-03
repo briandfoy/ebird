@@ -9,7 +9,7 @@ use List::Util qw();
 
 use eBird;
 use eBird::IO;
-use eBird::Nearby;
+use eBird::LatLong;
 
 =encoding utf8
 

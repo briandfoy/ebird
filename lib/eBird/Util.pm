@@ -349,7 +349,7 @@ sub normalize_date :Export ($date) {
 
 =cut
 
-sub parse_csv :Export ( $data, $headers, $bless_into ) {
+sub parse_csv :Export ( $data, $headers, $bless_into = undef ) {
 	state $rc = require Text::CSV_XS;
 
 	load_module($bless_into) if defined $bless_into;
@@ -361,7 +361,7 @@ sub parse_csv :Export ( $data, $headers, $bless_into ) {
 	$csv->getline($fh); # ignore headers
 	while( my $row = $csv->getline($fh) ) {
 		my $object = { map { $headers->[$_] => $row->[$_] } 0 .. $#$headers };
-		$object = $bless_into->new( $object ) if defined $bless_into;
+		$object = $bless_into->new_from_csv( $object ) if defined $bless_into;
 		push @rows, $object;
 		}
 	close $fh;

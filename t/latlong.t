@@ -153,12 +153,17 @@ subtest 'region' => sub {
 
 		my $latlong = $class->$method( $latitude, $longitude );
 		isa_ok $latlong, $class;
-		can_ok $latlong, qw(region_info);
+		can_ok $latlong, qw(region);
 
-		my $region_info = $latlong->region_info;
+		my $region = $latlong->region;
+		isa_ok $region, 'eBird::Data::Region';
+		can_ok $region, 'code';
 
-		is $region_info->region,  $expected_region,  'region matches';
-		ok $region_info->contains($latlong),  'region contains geo-coordinate';
+		is $region->code,  $expected_region,  'region matches';
+
+		can_ok $region, qw(latlong_box);
+		isa_ok $region->latlong_box, 'eBird::LatLongBox';
+		ok $region->latlong_box->contains($latlong),  'region contains geo-coordinate';
 		};
 	};
 

@@ -4,14 +4,12 @@ no feature qw(module_true);
 
 package eBird::LatLong;
 use namespace::autoclean;
-use Carp qw(croak);
+
 use List::Util qw(first);
 use Mojo::URL;
 use Scalar::Util qw(blessed looks_like_number);
 
 use eBird;
-use eBird::IO;
-use eBird::Nearby;
 
 =encoding utf8
 
@@ -48,7 +46,8 @@ sub new_from_decimal {
 	my( $lat, $long ) = @args;
 
 	unless( defined $lat and defined $long ) {
-		croak "Too few arguments for new_from_decimal";
+		$ebird->io->carp( "Too few arguments for new_from_decimal" );
+		return;
 		}
 
 	no warnings qw(numeric);
@@ -108,7 +107,7 @@ C<new_from_any> can handle.
 
 =cut
 
-sub distance_to ($self, $any ) {
+sub distance_to ($self, $any) {
 	state $rc = require GIS::Distance;
 	state $gis = GIS::Distance->new;
 
@@ -116,8 +115,8 @@ sub distance_to ($self, $any ) {
 	return unless defined $to;
 
 	1_000 * $gis->distance_metal(
-		$self->lat, $self->long,
-		$to->lat,   $to->long,
+		$self->latitude, $self->longitude,
+		$to->latitude,   $to->longitude,
 		);
 	}
 
@@ -161,7 +160,6 @@ Returns the decimal latitude to two decimal places.
 =cut
 
 sub latitude ($self) { $self->{'lat'} }
-*lat = \&latitude;
 
 =item * lng
 
@@ -176,16 +174,21 @@ Returns the decimal longitude to two decimal places.
 =cut
 
 sub longitude ($self) { $self->{'long'} }
+{
+no warnings qw(once);
+*lat  = \&latitude;
 *lon  = \&longitude;
 *long = \&longitude;
 *lng  = \&longitude;
+}
 
-=item * region_info
+=item * region
 
 =cut
 
-sub region_info ($self) {
-	eBird::Nearby->new( $self, $self->ebird )->region;
+sub region ($self) {
+	state $rc = require eBird::Nearby;
+	eBird::Nearby->closest( $self, $self->ebird )->region;
 	}
 
 =item * time_zone_offset
@@ -219,4 +222,5 @@ Copyright 2023-2026, brian d foy C<< <briandfoy@pobox.com> >>
 
 =cut
 
+no warnings qw(void);
 __PACKAGE__;

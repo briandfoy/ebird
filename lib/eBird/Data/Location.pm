@@ -92,7 +92,9 @@ sub new_from_api_response ($class, $hash) {
 	$self->{'name'}         = $hash->{'result'};
 	$self->{'id'}           = $hash->{'code'};
 	$self->{'latlong_box'}  = eBird::LatLongBox->new_from_api_response( $hash );
-	$self->{'parent'}       = eBird::Data::Region->new_from_api_response($hash->{'parent'});
+	$self->{'region'}       = $class->ebird->region->info($hash->{'parent'}{'code'}) if defined $hash->{'parent'};
+
+	$self->{'hotspot'}      = eval { $class->ebird->hotspot->info( $hash->{'code'} )->is_hotspot } // 0;
 
 	# need to look up hotspot (410 Gone if not)
 
@@ -105,7 +107,7 @@ sub new_from_api_response ($class, $hash) {
 
 sub new_from_id ($class, $id //= '') {
 	return unless $id =~ m/\A L \d+ \z/ax;
-	$class->new_from_api_response( $class->ebird->region->info($id) );
+	$class->ebird->region->info($id);
 	}
 
 =back
@@ -141,7 +143,7 @@ Return a L<eBird::Data::Region> object.
 # https://api.ebird.org/v2/ref/region/info/{{regionCode}}
 # https://api.ebird.org/v2/product/lists/{{regionCode}}
 
-sub region ($self) { $self->{'parent'} }
+sub region ($self) { $self->{'region'} }
 
 =back
 
@@ -149,20 +151,11 @@ sub region ($self) { $self->{'parent'} }
 
 =over 4
 
-=item * contains( LATLONG )
-
-Returns true if the coordinates of C<LATLONG> are in the bounding box for
-the region.
-
-=cut
-
-
-
 =item * is_hotspot
 
 =cut
 
-sub is_hotspot ($self) { 0 }
+sub is_hotspot ($self) { $self->{'hotspot'} }
 
 =item * is_location
 
