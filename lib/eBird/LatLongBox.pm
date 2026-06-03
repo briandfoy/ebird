@@ -30,7 +30,7 @@ geocoordinates module.
 
 =over 4
 
-=item * new_from_decimal( LATLONG1, LATLONG2 )
+=item * new( LATLONG1, LATLONG2 )
 
 Creates a new L<eBird::LatLongBox> object from L<eBird::LatLong> objects. These
 do not need to be passed in any order.
