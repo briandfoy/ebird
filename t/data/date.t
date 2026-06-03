@@ -41,7 +41,6 @@ subtest 'new' => sub {
 			subtest 'time-moment' => sub {
 				my $t = $obj->as_time_moment;
 				isa_ok $t, 'Time::Moment';
-				diag "TM: " . $t->strftime( '%Y-%m-%dT%H:%M%z' );
 				is $t->$_, $hash->{$_}, "$_ matches" for qw(year month day_of_month hour minute);
 				is $obj->as_time_moment->strftime( '%z' ), '+0000', 'time zone as expected';
 				};
@@ -64,7 +63,7 @@ subtest 'with lat long' => sub {
 	subtest 'time-moment' => sub {
 		my $t = $obj->as_time_moment;
 		isa_ok $t, 'Time::Moment';
-		diag "TM: " . $t->strftime( '%Y-%m-%dT%H:%M%z' );
+#		diag "TM: " . $t->strftime( '%Y-%m-%dT%H:%M%z' );
 		is $t->$_, $summer_date{$_}, "$_ matches" for qw(year month day_of_month minute);
 		is $obj->as_time_moment->strftime( '%z' ), '-0400', 'time zone as expected';
 
