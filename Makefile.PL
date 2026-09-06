@@ -92,6 +92,7 @@ my %WriteMakefile = (
 		'File::Path'                                   => '0',
 		'File::Spec:Functions'                         => '0',
 		'Hash::AsObject'                               => '0',
+		'Geo::Location::TimeZoneFinder'                => '0',
 		'List::Util'                                   => '0',
 		'Mojo::DOM'                                    => '0',
 		'Mojo::File'                                   => '0',
