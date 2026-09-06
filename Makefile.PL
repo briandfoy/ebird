@@ -85,6 +85,7 @@ my %WriteMakefile = (
 		'builtin'                                      => '0',
 		'Carp'                                         => '0',
 		'Cwd'                                          => '0',
+		'DateTime::TimeZone'                           => '0',
 		'DBD::SQLite'                                  => '0',
 		'DBI'                                          => '0',
 		'experimental'                                 => '0',
